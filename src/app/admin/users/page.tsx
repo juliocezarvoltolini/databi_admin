@@ -47,6 +47,7 @@ export default async function UsersPage() {
         name: user.name,
         email: user.email,
         company: user.company,
+        profile: user.profile
       }}
       permissions={{
         canCreate: canCreateUsers,

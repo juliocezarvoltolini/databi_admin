@@ -6,7 +6,7 @@ export const userSessionSchema = z.object({
   userId: z.string().cuid(),
   email: z.string().email(),
   name: z.string().min(1),
-  companyId: z.string().cuid(),
+  companyId: z.string().cuid().nullable(), // Opcional para administradores do sistema
   profileId: z.string().cuid().nullable(),
 });
 
@@ -21,7 +21,8 @@ export const createUserSchema = z.object({
   email: z.string().email("Email inválido"),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  profileId: z.string().cuid().optional(),
+  profileId: z.string().cuid().nonoptional(),
+  companyId: z.string().cuid().nullable().optional(), // Opcional para administradores do sistema
 });
 
 // Schema para criar empresa
@@ -41,6 +42,7 @@ export const createDashboardSchema = z.object({
   name: z.string().min(2, "Nome do dashboard deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   powerbiUrl: z.string().url("URL do Power BI inválida"),
+  companyId: z.string().cuid().optional(), // Empresa associada (opcional para admins sistema)
 });
 
 // Schema para criar perfil
@@ -48,6 +50,12 @@ export const createProfileSchema = z.object({
   name: z.string().min(2, "Nome do perfil deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   permissions: z.array(z.string()).optional(),
+  companyIds: z.array(z.string().cuid()).optional(), // IDs das empresas associadas
+});
+
+// Schema para atualizar relação perfil-empresa
+export const updateProfileCompaniesSchema = z.object({
+  companyIds: z.array(z.string().cuid()),
 });
 
 // Tipos derivados dos schemas
@@ -57,6 +65,7 @@ export type CreateUserData = z.infer<typeof createUserSchema>;
 export type CreateCompanyData = z.infer<typeof createCompanySchema>;
 export type CreateDashboardData = z.infer<typeof createDashboardSchema>;
 export type CreateProfileData = z.infer<typeof createProfileSchema>;
+export type UpdateProfileCompaniesData = z.infer<typeof updateProfileCompaniesSchema>;
 
 // Tipos para resposta da API
 export interface ApiResponse<T = unknown> {

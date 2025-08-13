@@ -4,13 +4,14 @@
 import { useState, useEffect } from "react";
 import ProfileForm from "./profile.form";
 import ProfileList from "./profile-list";
+import { Company } from "@/generated/prisma";
 
 
 interface User {
   id: string;
   name: string;
   email: string;
-  company: string;
+  company: Company;
 }
 
 interface Permission {
@@ -28,6 +29,7 @@ interface Profile {
   createdAt: string;
   userCount: number;
   permissions: Permission[];
+  companies: Company[];
 }
 
 interface Permissions {
@@ -41,9 +43,10 @@ interface Props {
   permissions: Permissions;
 }
 
-export default function ProfilesClient({ user, permissions }: Props) {
+export default function ProfilesClient({ permissions }: Props) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
@@ -72,6 +75,15 @@ export default function ProfilesClient({ user, permissions }: Props) {
         const permissionsResult = await permissionsResponse.json();
         if (permissionsResult.success) {
           setAllPermissions(permissionsResult.data);
+        }
+      }
+
+      // Carregar todas as empresas disponíveis
+      const companiesResponse = await fetch("/api/companies");
+      if (companiesResponse.ok) {
+        const companiesResult = await companiesResponse.json();
+        if (companiesResult.success) {
+          setAllCompanies(companiesResult.data);
         }
       }
     } catch (error) {
@@ -170,6 +182,7 @@ export default function ProfilesClient({ user, permissions }: Props) {
           <ProfileForm
             profile={editingProfile}
             allPermissions={allPermissions}
+            allCompanies={allCompanies}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />

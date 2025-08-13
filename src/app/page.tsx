@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { verifyToken } from "@/lib/auth";
 import Link from "next/link";
 
-export default async function HomePage() {
+// Option 1: Add explicit return type annotation
+export default async function HomePage(): Promise<never> {
   // Verificar se usuário está logado
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
@@ -13,25 +14,23 @@ export default async function HomePage() {
   if (token) {
     const session = await verifyToken(token);
     if (session) {
-      // Usuário logado e token válido = redirecionar para dashboard
-      redirect("/dashboard");
+      // Usuário logado e token válido = redirecionar para admin
+      redirect("/admin");
     }
   }
 
   // Se chegou aqui, usuário NÃO está logado = mostrar página de login
   redirect("/login");
-
-  // Este return nunca será executado devido ao redirect acima,
-  // mas é necessário para evitar erros de TypeScript
-  return null;
 }
 
-// ===== VERSÃO ALTERNATIVA: Com página de apresentação =====
-// Se você quiser manter uma página de apresentação para usuários não logados,
-// descomente o código abaixo e comente o redirect("/login") acima:
+// ===== ALTERNATIVE VERSION 1: With never return type =====
+// Since redirect() throws and never returns, we can use Promise<never>
+
+// ===== ALTERNATIVE VERSION 2: With JSX return type =====
+// If you want to keep the landing page version, use this approach:
 
 /*
-export default async function HomePage() {
+export default async function HomePage(): Promise<JSX.Element> {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
 
@@ -130,5 +129,28 @@ export default async function HomePage() {
       </div>
     </div>
   );
+}
+*/
+
+// ===== ALTERNATIVE VERSION 3: Most flexible approach =====
+// This version handles both cases cleanly:
+
+/*
+export default async function HomePage(): Promise<JSX.Element | never> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth-token")?.value;
+
+  if (token) {
+    const session = await verifyToken(token);
+    if (session) {
+      redirect("/dashboard");
+    }
+  }
+
+  // Option A: Redirect to login
+  redirect("/login");
+  
+  // Option B: Show landing page (comment the redirect above and uncomment below)
+  // return <YourLandingPageJSX />;
 }
 */

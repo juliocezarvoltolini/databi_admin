@@ -10,6 +10,12 @@ interface Permission {
   category: string;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Profile {
   id: string;
   name: string;
@@ -18,6 +24,7 @@ interface Profile {
   createdAt: string;
   userCount: number;
   permissions: Permission[];
+  companies: Company[];
 }
 
 interface Permissions {
@@ -181,6 +188,23 @@ export default function ProfileList({
                         </svg>
                         {profile.userCount} usuário(s)
                       </span>
+
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                        <svg
+                          className="w-3 h-3 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                          />
+                        </svg>
+                        {profile.companies.length} empresa(s)
+                      </span>
                     </div>
 
                     {profile.description && (
@@ -265,12 +289,59 @@ export default function ProfileList({
                 </div>
               </div>
 
-              {/* Permissões (expandível) */}
+              {/* Detalhes (expandível) */}
               {expandedProfile === profile.id && (
-                <div className="p-4 bg-white">
-                  <h5 className="text-sm font-medium text-gray-900 mb-3">
-                    Permissões deste perfil:
-                  </h5>
+                <div className="p-4 bg-white space-y-6">
+                  {/* Empresas */}
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-900 mb-3">
+                      Empresas associadas:
+                    </h5>
+                    {profile.companies.length === 0 ? (
+                      <p className="text-sm text-gray-500">
+                        Nenhuma empresa associada
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {profile.companies.map((company) => (
+                          <div
+                            key={company.id}
+                            className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md"
+                          >
+                            <div className="p-1 bg-purple-100 rounded">
+                              <svg
+                                className="w-4 h-4 text-purple-600"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                                />
+                              </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900">
+                                {company.name}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {company.slug}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Permissões */}
+                  <div>
+                    <h5 className="text-sm font-medium text-gray-900 mb-3">
+                      Permissões deste perfil:
+                    </h5>
 
                   {profile.permissions.length === 0 ? (
                     <p className="text-sm text-gray-500">
@@ -302,6 +373,7 @@ export default function ProfileList({
                       ))}
                     </div>
                   )}
+                  </div>
                 </div>
               )}
             </div>

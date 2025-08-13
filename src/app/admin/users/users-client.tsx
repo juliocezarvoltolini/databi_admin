@@ -5,13 +5,15 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import UserForm from "./user-form";
 import UserList from "./user-list";
+import { Profile } from "@/generated/prisma";
 
 
 interface User {
   id: string;
   name: string;
   email: string;
-  company: string;
+  company: Company;
+  profile: Profile;
 }
 
 interface UserData {
@@ -27,20 +29,14 @@ interface UserData {
   } | null;
 }
 
-interface Profile {
+interface Company {
   id: string;
   name: string;
-  description: string;
-  userCount: number;
-  permissions: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-  }>;
+  slug: string;
+  isActive: boolean;
 }
 
-interface Permissions {
+export interface UserPermissions {
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -48,12 +44,14 @@ interface Permissions {
 
 interface Props {
   user: User;
-  permissions: Permissions;
+  permissions: UserPermissions;
+  isSystemAdmin: boolean;
 }
 
-export default function UsersClient({ user, permissions }: Props) {
+export default function UsersClient({ user, permissions, isSystemAdmin }: Props) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
@@ -83,6 +81,17 @@ export default function UsersClient({ user, permissions }: Props) {
         const profilesResult = await profilesResponse.json();
         if (profilesResult.success) {
           setProfiles(profilesResult.data);
+        }
+      }
+
+      // Carregar empresas (apenas para administradores do sistema)
+      if (isSystemAdmin) {
+        const companiesResponse = await fetch("/api/companies");
+        if (companiesResponse.ok) {
+          const companiesResult = await companiesResponse.json();
+          if (companiesResult.success) {
+            setCompanies(companiesResult.data);
+          }
         }
       }
     } catch (error) {
@@ -165,24 +174,21 @@ export default function UsersClient({ user, permissions }: Props) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                ← Voltar ao Dashboard
-              </button>
-              <div className="border-l border-gray-300 pl-4">
+             
+             
                 <h1 className="text-2xl font-bold text-gray-900">
                   Gestão de Usuários
                 </h1>
-                <p className="text-sm text-gray-600">{user.company}</p>
-              </div>
+                {user.company && (
+                  <p className="text-sm text-gray-600">{user.company.name}</p>
+                )}
+              
             </div>
 
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                <p className="text-xs text-gray-500">Administrador</p>
+                <p className="text-xs text-gray-500">{user.profile.name}</p>
               </div>
 
               <button
@@ -210,6 +216,8 @@ export default function UsersClient({ user, permissions }: Props) {
             <UserForm
               user={editingUser}
               profiles={profiles}
+              companies={companies}
+              isSystemAdmin={isSystemAdmin}
               onSuccess={handleFormSuccess}
               onCancel={handleFormCancel}
             />
@@ -325,7 +333,7 @@ export default function UsersClient({ user, permissions }: Props) {
             <UserList
               users={users}
               profiles={profiles}
-              permissions={permissions}
+              permission={permissions}
               onEdit={handleEditUser}
               onDelete={handleDeleteUser}
             />

@@ -20,13 +20,14 @@ const updateUserSchema = z.object({
 
 // GET - Buscar usuário específico
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     const companyId = headersList.get("x-company-id");
+    const resolvedParams = await params;
 
     if (!userId || !companyId) {
       return NextResponse.json(
@@ -50,7 +51,7 @@ export async function GET(
     // Buscar usuário
     const user = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         companyId: companyId,
       },
       select: {
@@ -93,12 +94,13 @@ export async function GET(
 // PUT - Atualizar usuário
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     const companyId = headersList.get("x-company-id");
+    const resolvedParams = await params;
 
     if (!userId || !companyId) {
       return NextResponse.json(
@@ -139,7 +141,7 @@ export async function PUT(
     // Verificar se usuário existe e pertence à empresa
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         companyId: companyId,
       },
     });
@@ -171,13 +173,18 @@ export async function PUT(
         const profile = await prisma.profile.findFirst({
           where: {
             id: updateData.profileId,
-            companyId: companyId,
+            isActive: true,
+            companies: {
+              some: {
+                companyId: companyId,
+              },
+            },
           },
         });
 
         if (!profile) {
           return NextResponse.json(
-            { success: false, error: "Perfil inválido" } as ApiResponse,
+            { success: false, error: "Perfil inválido ou não disponível para esta empresa" } as ApiResponse,
             { status: 400 }
           );
         }
@@ -193,6 +200,11 @@ export async function PUT(
                     permission: true,
                   },
                 },
+                companies: {
+                  include: {
+                    company: true,
+                  },
+                },
               },
             },
           },
@@ -205,6 +217,11 @@ export async function PUT(
               permissions: {
                 include: {
                   permission: true,
+                },
+              },
+              companies: {
+                include: {
+                  company: true,
                 },
               },
             },
@@ -256,7 +273,7 @@ export async function PUT(
 
     // Atualizar usuário
     const updatedUser = await prisma.user.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: dataToUpdate,
       select: {
         id: true,
@@ -290,13 +307,14 @@ export async function PUT(
 
 // DELETE - Desativar usuário (soft delete)
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const headersList = await headers();
     const userId = headersList.get("x-user-id");
     const companyId = headersList.get("x-company-id");
+    const resolvedParams = await params;
 
     if (!userId || !companyId) {
       return NextResponse.json(
@@ -318,7 +336,7 @@ export async function DELETE(
     }
 
     // Não permitir que o usuário exclua a si mesmo
-    if (params.id === userId) {
+    if (resolvedParams.id === userId) {
       return NextResponse.json(
         {
           success: false,
@@ -331,7 +349,7 @@ export async function DELETE(
     // Verificar se usuário existe e pertence à empresa
     const existingUser = await prisma.user.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         companyId: companyId,
       },
     });
@@ -345,7 +363,7 @@ export async function DELETE(
 
     // Desativar usuário (soft delete)
     await prisma.user.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: { isActive: false },
     });
 

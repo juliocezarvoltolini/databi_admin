@@ -81,7 +81,7 @@ export async function authenticateUser(email: string, password: string) {
     },
   });
 
-  if (!user || !user.isActive || !user.company.isActive) {
+  if (!user || !user.isActive ||  (user.company && !user.company.isActive)) {
     return null;
   }
 

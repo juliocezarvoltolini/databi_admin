@@ -29,7 +29,7 @@ export default async function ProfilesPage() {
   // Verificar permissão para visualizar perfis
   const canViewProfiles = await hasPermission(session.userId, "VIEW_PROFILES");
   if (!canViewProfiles) {
-    redirect("/dashboard");
+    redirect("/admin");
   }
 
   // Verificar outras permissões
@@ -49,7 +49,7 @@ export default async function ProfilesPage() {
         id: user.id,
         name: user.name,
         email: user.email,
-        company: user.company.name,
+        company: user.company,
       }}
       permissions={{
         canCreate: canCreateProfiles,

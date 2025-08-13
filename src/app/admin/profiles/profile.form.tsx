@@ -10,6 +10,7 @@ const profileFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   permissions: z.array(z.string()).min(1, "Selecione pelo menos uma permissão"),
+  companyIds: z.array(z.string()).min(1, "Selecione pelo menos uma empresa"),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
@@ -21,6 +22,12 @@ interface Permission {
   category: string;
 }
 
+interface Company {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface Profile {
   id: string;
   name: string;
@@ -29,11 +36,13 @@ interface Profile {
   createdAt: string;
   userCount: number;
   permissions: Permission[];
+  companies: Company[];
 }
 
 interface Props {
   profile?: Profile | null;
   allPermissions: Permission[];
+  allCompanies: Company[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -41,6 +50,7 @@ interface Props {
 export default function ProfileForm({
   profile,
   allPermissions,
+  allCompanies,
   onSuccess,
   onCancel,
 }: Props) {
@@ -62,10 +72,12 @@ export default function ProfileForm({
       name: profile?.name || "",
       description: profile?.description || "",
       permissions: profile?.permissions.map((p) => p.id) || [],
+      companyIds: profile?.companies.map((c) => c.id) || [],
     },
   });
 
   const selectedPermissions = watch("permissions") || [];
+  const selectedCompanies = watch("companyIds") || [];
 
   // Agrupar permissões por categoria
   const permissionsByCategory = allPermissions.reduce((acc, permission) => {
@@ -110,6 +122,19 @@ export default function ProfileForm({
     }
   };
 
+  const handleCompanyChange = (companyId: string, checked: boolean) => {
+    const currentCompanies = getValues("companyIds");
+
+    if (checked) {
+      setValue("companyIds", [...currentCompanies, companyId]);
+    } else {
+      setValue(
+        "companyIds",
+        currentCompanies.filter((id) => id !== companyId)
+      );
+    }
+  };
+
   const isCategoryFullySelected = (category: string) => {
     const categoryPermissions = permissionsByCategory[category].map(
       (p) => p.id
@@ -124,6 +149,8 @@ export default function ProfileForm({
     try {
       const url = isEditing ? `/api/profiles/${profile.id}` : "/api/profiles";
       const method = isEditing ? "PUT" : "POST";
+
+      console.log(JSON.stringify(data));
 
       const response = await fetch(url, {
         method,
@@ -154,6 +181,8 @@ export default function ProfileForm({
     USER: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1M13 7a4 4 0 11-8 0 4 4 0 018 0z",
     PROFILE:
       "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
+    COMPANY:
+      "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4",
     SYSTEM:
       "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z",
   };
@@ -162,6 +191,7 @@ export default function ProfileForm({
     DASHBOARD: "Dashboards",
     USER: "Usuários",
     PROFILE: "Perfis",
+    COMPANY: "Empresas",
     SYSTEM: "Sistema",
   };
 
@@ -194,6 +224,43 @@ export default function ProfileForm({
             placeholder="Descreva o propósito deste perfil"
             disabled={loading}
           />
+        </div>
+      </div>
+
+      {/* Empresas */}
+      <div>
+        <label className="label-field">Empresas</label>
+        {errors.companyIds && (
+          <p className="mt-1 text-sm text-red-600">
+            {errors.companyIds.message}
+          </p>
+        )}
+        
+        <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {allCompanies.map((company) => (
+            <label
+              key={company.id}
+              className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                checked={selectedCompanies.includes(company.id)}
+                onChange={(e) =>
+                  handleCompanyChange(company.id, e.target.checked)
+                }
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                disabled={loading}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900">
+                  {company.name}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {company.slug}
+                </p>
+              </div>
+            </label>
+          ))}
         </div>
       </div>
 
@@ -322,7 +389,7 @@ export default function ProfileForm({
 
         <button
           type="submit"
-          disabled={loading || selectedPermissions.length === 0}
+          disabled={loading || selectedPermissions.length === 0 || selectedCompanies.length === 0}
           className="btn-primary"
         >
           {loading ? (

@@ -36,7 +36,7 @@ export default function LoginPage() {
       const result: ApiResponse = await response.json();
 
       if (result.success) {
-        router.push("/dashboard");
+        router.push("/welcome");
         router.refresh();
       } else {
         setError(result.error || "Erro ao fazer login");

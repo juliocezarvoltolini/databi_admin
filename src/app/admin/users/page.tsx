@@ -29,13 +29,16 @@ export default async function UsersPage() {
   // Verificar permissão para visualizar usuários
   const canViewUsers = await hasPermission(session.userId, "VIEW_USERS");
   if (!canViewUsers) {
-    redirect("/dashboard");
+    redirect("/admin");
   }
 
   // Verificar outras permissões
   const canCreateUsers = await hasPermission(session.userId, "CREATE_USERS");
   const canEditUsers = await hasPermission(session.userId, "EDIT_USERS");
   const canDeleteUsers = await hasPermission(session.userId, "DELETE_USERS");
+  
+  // Verificar se é administrador do sistema (pode visualizar empresas)
+  const canViewCompanies = await hasPermission(session.userId, "VIEW_COMPANIES");
 
   return (
     <UsersClient
@@ -43,13 +46,14 @@ export default async function UsersPage() {
         id: user.id,
         name: user.name,
         email: user.email,
-        company: user.company.name,
+        company: user.company,
       }}
       permissions={{
         canCreate: canCreateUsers,
         canEdit: canEditUsers,
         canDelete: canDeleteUsers,
       }}
+      isSystemAdmin={canViewCompanies}
     />
   );
 }

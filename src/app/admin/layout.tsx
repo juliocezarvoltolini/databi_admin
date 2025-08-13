@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { verifyToken, getCurrentUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
+import { prisma } from "@/lib/prisma";
 import AdminLayoutClient from "./admin-layout-client";
 
 export default async function AdminLayout({
@@ -36,12 +37,29 @@ export default async function AdminLayout({
     session.userId,
     "MANAGE_DASHBOARDS"
   );
+  const canViewCompanies = await hasPermission(session.userId, "VIEW_COMPANIES");
   const isAdmin = await hasPermission(session.userId, "ADMIN_COMPANY");
 
-  // Se não tem nenhuma permissão administrativa, redirecionar
-  if (!canViewUsers && !canViewProfiles && !canManageDashboards && !isAdmin) {
-    redirect("/dashboard");
+  // Se não tem nenhuma permissão administrativa, redirecionar para login
+  if (!canViewUsers && !canViewProfiles && !canManageDashboards && !canViewCompanies && !isAdmin) {
+    redirect("/login");
   }
+
+  // Buscar dashboards da empresa do usuário
+  const companyDashboards = user.company ? await prisma.dashboard.findMany({
+    where: {
+      companyId: user.company.id,
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      powerbiUrl: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  }) : [];
 
   return (
     <AdminLayoutClient
@@ -49,15 +67,17 @@ export default async function AdminLayout({
         id: user.id,
         name: user.name,
         email: user.email,
-        company: user.company.name,
-        profile: user.profile?.name || "Sem perfil",
+        company: user.company,
+        profile: user.profile,
       }}
       permissions={{
         canViewUsers,
         canViewProfiles,
         canManageDashboards,
+        canViewCompanies,
         isAdmin,
       }}
+      companyDashboards={companyDashboards}
     >
       {children}
     </AdminLayoutClient>

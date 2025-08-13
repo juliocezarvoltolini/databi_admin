@@ -1,5 +1,5 @@
 // prisma/seed.js
-import { PrismaClient } from "../src/generated/prisma/client";
+import { PrismaClient } from "../src/generated/prisma/index.js";
 import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -57,6 +57,26 @@ async function main() {
         name: "ADMIN_COMPANY",
         description: "Administração da empresa",
         category: "SYSTEM",
+      },
+      {
+        name: "VIEW_COMPANIES",
+        description: "Visualizar empresas",
+        category: "COMPANY",
+      },
+      {
+        name: "CREATE_COMPANIES",
+        description: "Criar empresas",
+        category: "COMPANY",
+      },
+      {
+        name: "EDIT_COMPANIES",
+        description: "Editar empresas",
+        category: "COMPANY",
+      },
+      {
+        name: "DELETE_COMPANIES",
+        description: "Excluir empresas",
+        category: "COMPANY",
       },
     ];
 

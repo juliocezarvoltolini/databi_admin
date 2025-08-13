@@ -1,7 +1,9 @@
 // src/app/admin/users/user-list.tsx
 "use client";
 
+import { Profile } from "@/generated/prisma";
 import { useState } from "react";
+import { UserPermissions } from "./users-client";
 
 interface UserData {
   id: string;
@@ -16,29 +18,11 @@ interface UserData {
   } | null;
 }
 
-interface Profile {
-  id: string;
-  name: string;
-  description: string;
-  userCount: number;
-  permissions: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-  }>;
-}
-
-interface Permissions {
-  canCreate: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-}
 
 interface Props {
   users: UserData[];
   profiles: Profile[];
-  permissions: Permissions;
+  permission: UserPermissions;
   onEdit: (user: UserData) => void;
   onDelete: (userId: string) => void;
 }
@@ -46,13 +30,14 @@ interface Props {
 export default function UserList({
   users,
   profiles,
-  permissions,
+  permission,
   onEdit,
   onDelete,
 }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProfile, setFilterProfile] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+
 
   // Filtrar usuários
   const filteredUsers = users.filter((user) => {
@@ -184,7 +169,7 @@ export default function UserList({
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Criado em
                   </th>
-                  {(permissions.canEdit || permissions.canDelete) && (
+                  {(permission.canEdit || permission.canDelete) && (
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Ações
                     </th>
@@ -234,10 +219,10 @@ export default function UserList({
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(user.createdAt)}
                     </td>
-                    {(permissions.canEdit || permissions.canDelete) && (
+                    {(permission.canEdit || permission.canDelete) && (
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end space-x-2">
-                          {permissions.canEdit && (
+                          {permission.canEdit && (
                             <button
                               onClick={() => onEdit(user)}
                               className="text-blue-600 hover:text-blue-900"
@@ -245,7 +230,7 @@ export default function UserList({
                               Editar
                             </button>
                           )}
-                          {permissions.canDelete && user.isActive && (
+                          {permission.canDelete && user.isActive && (
                             <button
                               onClick={() => onDelete(user.id)}
                               className="text-red-600 hover:text-red-900"
@@ -308,9 +293,9 @@ export default function UserList({
                     </div>
                   </div>
 
-                  {(permissions.canEdit || permissions.canDelete) && (
+                  {(permission.canEdit || permission.canDelete) && (
                     <div className="flex flex-col space-y-2">
-                      {permissions.canEdit && (
+                      {permission.canEdit && (
                         <button
                           onClick={() => onEdit(user)}
                           className="text-blue-600 hover:text-blue-900 text-sm"
@@ -318,7 +303,7 @@ export default function UserList({
                           Editar
                         </button>
                       )}
-                      {permissions.canDelete && user.isActive && (
+                      {permission.canDelete && user.isActive && (
                         <button
                           onClick={() => onDelete(user.id)}
                           className="text-red-600 hover:text-red-900 text-sm"

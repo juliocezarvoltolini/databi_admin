@@ -27,7 +27,7 @@ model Company {
   // Relacionamentos
   users       User[]
   dashboards  Dashboard[]
-  profiles    Profile[]   // Perfis específicos desta empresa
+  profiles    ProfileCompany[]  // Relação many-to-many com perfis
   
   @@map("companies")
 }
@@ -42,13 +42,13 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Relacionamento com empresa
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
+  // Relacionamento com empresa (opcional para administradores do sistema)
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
   
   // Relacionamento com perfil
-  profileId   String?
-  profile     Profile? @relation(fields: [profileId], references: [id])
+  profileId   String
+  profile     Profile @relation(fields: [profileId], references: [id])
   
   // Sessões para autenticação
   sessions    Session[]
@@ -56,7 +56,7 @@ model User {
   @@map("users")
 }
 
-// Perfis/Roles por empresa (solução para seu problema!)
+// Perfis/Roles que podem estar em múltiplas empresas
 model Profile {
   id          String   @id @default(cuid())
   name        String   // Ex: "Admin", "Visualizador", "Gerente"
@@ -65,17 +65,28 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  // Relacionamento com empresa (cada empresa tem seus próprios perfis)
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
-  
   // Relacionamentos
   users       User[]
   permissions ProfilePermission[]
+  companies   ProfileCompany[]  // Relação many-to-many com empresas
   
-  // Garante que não existam perfis com mesmo nome na mesma empresa
-  @@unique([name, companyId])
   @@map("profiles")
+}
+
+// Relacionamento N:N entre Perfis e Empresas
+model ProfileCompany {
+  id        String @id @default(cuid())
+  
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([profileId, companyId])
+  @@map("profile_companies")
 }
 
 // Dashboards do Power BI
@@ -89,8 +100,8 @@ model Dashboard {
   updatedAt   DateTime @updatedAt
   
   // Relacionamento com empresa
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id])
+  companyId   String?
+  company     Company?  @relation(fields: [companyId], references: [id])
   
   // Relacionamentos de acesso
   permissions ProfilePermission[]

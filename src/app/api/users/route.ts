@@ -1,28 +1,24 @@
 // src/app/api/users/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
-
 import { createUserSchema, validateData, type ApiResponse } from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";
+import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
 
 // GET - Listar usuários da empresa
 export async function GET(request: NextRequest) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const companyId = headersList.get("x-company-id");
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
+    }
 
-    // if (!userId || !companyId) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Não autorizado" } as ApiResponse,
-    //     { status: 401 }
-    //   );
-    // }
+    const { user } = authResult;
 
     // Verificar permissão
-    const canViewUsers = await hasPermission(userId, "VIEW_USERS");
+    const canViewUsers = await hasPermission(user.userId, "VIEW_USERS");
     if (!canViewUsers) {
       return NextResponse.json(
         {
@@ -33,18 +29,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar usuários da empresa
+    // Buscar usuários da empresa (ou todos se for administrador do sistema)
+
+    const whereClause = user.companyId 
+      ? { companyId: user.companyId, isActive: true }
+      : { isActive: true };
+    
     const users = await prisma.user.findMany({
-      where: {
-       /* companyId: companyId,*/
-        isActive: true,
-      },
+      where: whereClause,
       select: {
-        // id: true,
+        id: true,
         email: true,
         name: true,
         isActive: true,
         createdAt: true,
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         profile: {
           select: {
             id: true,
@@ -74,19 +78,16 @@ export async function GET(request: NextRequest) {
 // POST - Criar novo usuário
 export async function POST(request: NextRequest) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const companyId = headersList.get("x-company-id");
-
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+
     // Verificar permissão
-    const canCreateUsers = await hasPermission(userId, "CREATE_USERS");
+    const canCreateUsers = await hasPermission(user.userId, "CREATE_USERS");
     if (!canCreateUsers) {
       return NextResponse.json(
         {
@@ -112,7 +113,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, name, password, profileId } = validation.data!;
+    const { email, name, password, profileId, companyId } = validation.data!;
 
     // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
@@ -126,85 +127,114 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se o perfil existe e pertence à empresa
-    if (profileId) {
-      const profile = await prisma.profile.findFirst({
-        where: {
-          id: profileId,
-          companyId: companyId,
+    // Determinar a empresa do novo usuário
+    // Se companyId for fornecido explicitamente (incluindo null), usar ele
+    // Se não for fornecido, usar a empresa do usuário atual
+    const targetCompanyId = companyId !== undefined ? companyId : user.companyId;
+
+    // Verificar se o perfil existe e está associado à empresa correta (se houver empresa)
+    const profileWhere: any = {
+      id: profileId,
+      isActive: true,
+    };
+
+    // Se o usuário está sendo criado para uma empresa específica, verificar se o perfil está associado a ela
+    if (targetCompanyId) {
+      profileWhere.companies = {
+        some: {
+          companyId: targetCompanyId,
         },
-      });
+      };
+    }
 
-      if (!profile) {
-        return NextResponse.json(
-          { success: false, error: "Perfil inválido" } as ApiResponse,
-          { status: 400 }
-        );
-      }
+    const profile = await prisma.profile.findFirst({
+      where: profileWhere,
+    });
 
-      // Verificar se o usuário atual pode atribuir este perfil
-      // (só pode atribuir perfis com permissões que ele mesmo possui)
-      const currentUserProfile = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          profile: {
-            include: {
-              permissions: {
-                include: {
-                  permission: true,
-                },
+    if (!profile) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: targetCompanyId 
+            ? "Perfil inválido ou não disponível para esta empresa" 
+            : "Perfil inválido" 
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    // Verificar se o usuário atual pode atribuir este perfil
+    // (só pode atribuir perfis com permissões que ele mesmo possui)
+    const currentUserProfile = await prisma.user.findUnique({
+      where: { id: user.userId},
+      include: {
+        profile: {
+          include: {
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+            companies: {
+              include: {
+                company: true,
               },
             },
           },
         },
-      });
+      },
+    });
 
-      if (!currentUserProfile?.profile) {
+    if (!currentUserProfile?.profile) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Usuário atual sem perfil definido",
+        } as ApiResponse,
+        { status: 400 }
+      );
+    }
+
+    // Buscar permissões do perfil que será atribuído
+    const targetProfile = await prisma.profile.findUnique({
+      where: { id: profileId },
+      include: {
+        permissions: {
+          include: {
+            permission: true,
+          },
+        },
+        companies: {
+          include: {
+            company: true,
+          },
+        },
+      },
+    });
+
+    if (targetProfile) {
+      const currentUserPermissions =
+        currentUserProfile.profile.permissions.map(
+          (pp) => pp.permission.name
+        );
+      const targetPermissions = targetProfile.permissions.map(
+        (pp) => pp.permission.name
+      );
+
+      // Verificar se o usuário atual tem todas as permissões que vai atribuir
+      const hasAllPermissions = targetPermissions.every((permission) =>
+        currentUserPermissions.includes(permission)
+      );
+
+      if (!hasAllPermissions) {
         return NextResponse.json(
           {
             success: false,
-            error: "Usuário atual sem perfil definido",
+            error:
+              "Você não pode atribuir um perfil com permissões que você não possui",
           } as ApiResponse,
-          { status: 400 }
+          { status: 403 }
         );
-      }
-
-      // Buscar permissões do perfil que será atribuído
-      const targetProfile = await prisma.profile.findUnique({
-        where: { id: profileId },
-        include: {
-          permissions: {
-            include: {
-              permission: true,
-            },
-          },
-        },
-      });
-
-      if (targetProfile) {
-        const currentUserPermissions =
-          currentUserProfile.profile.permissions.map(
-            (pp) => pp.permission.name
-          );
-        const targetPermissions = targetProfile.permissions.map(
-          (pp) => pp.permission.name
-        );
-
-        // Verificar se o usuário atual tem todas as permissões que vai atribuir
-        const hasAllPermissions = targetPermissions.every((permission) =>
-          currentUserPermissions.includes(permission)
-        );
-
-        if (!hasAllPermissions) {
-          return NextResponse.json(
-            {
-              success: false,
-              error:
-                "Você não pode atribuir um perfil com permissões que você não possui",
-            } as ApiResponse,
-            { status: 403 }
-          );
-        }
       }
     }
 
@@ -212,27 +242,45 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
 
     // Criar usuário
-    const newUser = await prisma.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-        companyId,
-        profileId: profileId || null,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-        profile: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
+    const userData: any = {
+      email,
+      name,
+      password: hashedPassword,
+      profileId: profileId,
+    };
+
+    // Só adicionar companyId se não for null
+    if (targetCompanyId !== null) {
+      userData.companyId = targetCompanyId;
+    }
+
+    const userSelect: any = {
+      id: true,
+      email: true,
+      name: true,
+      createdAt: true,
+      profile: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
         },
       },
+    };
+
+    // Só incluir company se o usuário tiver uma empresa
+    if (targetCompanyId !== null) {
+      userSelect.company = {
+        select: {
+          id: true,
+          name: true,
+        },
+      };
+    }
+
+    const newUser = await prisma.user.create({
+      data: userData,
+      select: userSelect,
     });
 
     return NextResponse.json({

@@ -1,25 +1,26 @@
 // src/app/api/permissions/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { type ApiResponse } from "@/lib/types";
+import {
+  authenticateApiRequest,
+  createAuthErrorResponse,
+} from "@/lib/api-auth";
 
 // GET - Listar todas as permissões disponíveis
 export async function GET(request: NextRequest) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+
     // Verificar permissão para visualizar perfis (necessário para ver permissões)
-    const canViewProfiles = await hasPermission(userId, "VIEW_PROFILES");
+    const canViewProfiles = await hasPermission(user.userId, "VIEW_PROFILES");
     if (!canViewProfiles) {
       return NextResponse.json(
         {
@@ -30,8 +31,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const permissoesDoPerfil = await prisma.profilePermission.findMany({
+      where: { profileId: user.profileId },
+    });
+
+    const permissoesID = permissoesDoPerfil.reduce((acc, current) => {
+      acc.add(current.permissionId);
+      return acc;
+    }, new Set<string>());  
+
     // Buscar todas as permissões
     const permissions = await prisma.permission.findMany({
+      where: {
+        id: { in: [...permissoesID] },
+      },
       orderBy: [{ category: "asc" }, { name: "asc" }],
     });
 

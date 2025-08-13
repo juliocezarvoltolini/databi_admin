@@ -14,10 +14,16 @@ interface JWTUserPayload extends JWTPayload {
 }
 
 // Rotas que precisam de autenticação
-const protectedRoutes = ["/dashboard", "/admin", "/users", "/profiles"];
+const protectedRoutes = ["/welcome", "/dashboard", "/admin", "/users", "/profiles"];
+
+// Rotas de API que precisam de autenticação
+const protectedApiRoutes = ["/api/companies", "/api/users", "/api/profiles", "/api/permissions"];
 
 // Rotas públicas
 const publicRoutes = ["/login", "/register", "/"];
+
+// Rotas de API públicas
+const publicApiRoutes = ["/api/auth"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -27,19 +33,42 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Verificar se é rota protegida
+  // Permitir rotas de API públicas
+  if (publicApiRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  // Verificar se é rota protegida (páginas ou APIs)
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
+  
+  const isProtectedApiRoute = protectedApiRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
 
-  if (!isProtectedRoute) {
+  if (!isProtectedRoute && !isProtectedApiRoute) {
     return NextResponse.next();
   }
 
   // Verificar token
-  const token = request.cookies.get("auth-token")?.value;
+  let token = request.cookies.get("auth-token")?.value;
+  
+  // Para APIs, também verificar header Authorization
+  if (!token && isProtectedApiRoute) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      token = authHeader.substring(7);
+    }
+  }
 
   if (!token) {
+    if (isProtectedApiRoute) {
+      return NextResponse.json(
+        { success: false, error: "Token de autenticação necessário" },
+        { status: 401 }
+      );
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -49,6 +78,12 @@ export async function middleware(request: NextRequest) {
 
     // Verificar se tem os campos necessários
     if (!userPayload.userId || !userPayload.companyId) {
+      if (isProtectedApiRoute) {
+        return NextResponse.json(
+          { success: false, error: "Token inválido" },
+          { status: 401 }
+        );
+      }
       return NextResponse.redirect(new URL("/login", request.url));
     }
 
@@ -64,10 +99,19 @@ export async function middleware(request: NextRequest) {
     });
   } catch (error) {
     // Token inválido
+    if (isProtectedApiRoute) {
+      return NextResponse.json(
+        { success: false, error: "Token inválido ou expirado" },
+        { status: 401 }
+      );
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // Proteger todas as rotas exceto as explicitamente públicas
+  matcher: [
+    "/((?!api/auth|api/public|_next/static|_next/image|favicon.ico).*)",
+  ],
 };

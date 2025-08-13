@@ -5,15 +5,29 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+}
+
+interface ProfileWithPermissions {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  permissions: Permission[];
+}
 
 const userFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
   password: z
     .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .optional(),
+    .min(6, "Senha deve ter pelo menos 6 caracteres"),
   profileId: z.string().optional(),
+  companyId: z.string().optional(),
 });
 
 type UserFormData = z.infer<typeof userFormSchema>;
@@ -24,6 +38,10 @@ interface UserData {
   name: string;
   isActive: boolean;
   createdAt: string;
+  company?: {
+    id: string;
+    name: string;
+  } | null;
   profile: {
     id: string;
     name: string;
@@ -31,22 +49,18 @@ interface UserData {
   } | null;
 }
 
-interface Profile {
+interface Company {
   id: string;
   name: string;
-  description: string;
-  userCount: number;
-  permissions: Array<{
-    id: string;
-    name: string;
-    description: string;
-    category: string;
-  }>;
+  slug: string;
+  isActive: boolean;
 }
 
 interface Props {
   user?: UserData | null;
-  profiles: Profile[];
+  profiles: ProfileWithPermissions[];
+  companies: Company[];
+  isSystemAdmin: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -54,6 +68,8 @@ interface Props {
 export default function UserForm({
   user,
   profiles,
+  companies,
+  isSystemAdmin,
   onSuccess,
   onCancel,
 }: Props) {
@@ -63,24 +79,35 @@ export default function UserForm({
 
   const isEditing = !!user;
 
+  // Schema específico para edição (senha opcional)
+  const editUserFormSchema = userFormSchema.extend({
+    password: z
+      .string()
+      .min(6, "Senha deve ter pelo menos 6 caracteres")
+      .optional()
+      .or(z.literal("")),
+  });
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
   } = useForm<UserFormData>({
-    resolver: zodResolver(userFormSchema),
+    resolver: zodResolver(isEditing ? editUserFormSchema : userFormSchema),
     defaultValues: {
       name: user?.name || "",
       email: user?.email || "",
       profileId: user?.profile?.id || "",
+      companyId: user?.company?.id || "",
     },
   });
 
   const selectedProfileId = watch("profileId");
-  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+  const selectedProfile = profiles.find((p: ProfileWithPermissions) => p.id === selectedProfileId);
 
   const onSubmit = async (data: UserFormData) => {
+    console.log("Passou aqui");
     setLoading(true);
     setError("");
 
@@ -94,9 +121,18 @@ export default function UserForm({
             name: data.name,
             email: data.email,
             profileId: data.profileId || null,
+            companyId: data.companyId || null,
             ...(data.password && { password: data.password }),
           }
-        : data;
+        : {
+            name: data.name,
+            email: data.email,
+            profileId: data.profileId || null,
+            companyId: data.companyId || null,
+            ...(data.password && { password: data.password }),
+          };
+
+          console.log(`usuario ${JSON.stringify(payload)}`);
 
       const response = await fetch(url, {
         method,
@@ -222,6 +258,30 @@ export default function UserForm({
           )}
         </div>
 
+        {/* Empresa */}
+        {isSystemAdmin && (
+          <div>
+            <label className="label-field">Empresa</label>
+            <select
+              {...register("companyId", {})}
+              className="input-field"
+              disabled={loading}
+            >
+              <option value="">Administrador do Sistema (sem empresa)</option>
+              {companies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+            </select>
+            {errors.companyId && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.companyId.message}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Perfil */}
         <div>
           <label className="label-field">Perfil</label>
@@ -231,7 +291,7 @@ export default function UserForm({
             disabled={loading}
           >
             <option value="">Selecione um perfil</option>
-            {profiles.map((profile) => (
+            {profiles.map((profile: ProfileWithPermissions) => (
               <option key={profile.id} value={profile.id}>
                 {profile.name}
               </option>
@@ -260,7 +320,7 @@ export default function UserForm({
               Permissões incluídas:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {selectedProfile.permissions.map((permission) => (
+              {selectedProfile.permissions?.map((permission: Permission) => (
                 <div
                   key={permission.id}
                   className="flex items-center space-x-2"

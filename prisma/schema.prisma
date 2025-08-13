@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabela principal das empresas (as "caixas")
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique // URL amigável
+  logo        String?  // Caminho para logo da empresa
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  users       User[]
+  dashboards  Dashboard[]
+  profiles    Profile[]   // Perfis específicos desta empresa
+  
+  @@map("companies")
+}
+
+// Usuários do sistema
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  password    String   // Hash da senha
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamento com empresa
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  // Relacionamento com perfil
+  profileId   String?
+  profile     Profile? @relation(fields: [profileId], references: [id])
+  
+  // Sessões para autenticação
+  sessions    Session[]
+  
+  @@map("users")
+}
+
+// Perfis/Roles por empresa (solução para seu problema!)
+model Profile {
+  id          String   @id @default(cuid())
+  name        String   // Ex: "Admin", "Visualizador", "Gerente"
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamento com empresa (cada empresa tem seus próprios perfis)
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  // Relacionamentos
+  users       User[]
+  permissions ProfilePermission[]
+  
+  // Garante que não existam perfis com mesmo nome na mesma empresa
+  @@unique([name, companyId])
+  @@map("profiles")
+}
+
+// Dashboards do Power BI
+model Dashboard {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  powerbiUrl  String   // Link público do Power BI
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relacionamento com empresa
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  
+  // Relacionamentos de acesso
+  permissions ProfilePermission[]
+  
+  @@map("dashboards")
+}
+
+// Tabela de permissões (o que cada perfil pode fazer)
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique // Ex: "VIEW_DASHBOARD", "MANAGE_USERS", "CREATE_USERS"
+  description String
+  category    String   // Ex: "DASHBOARD", "USER", "SYSTEM"
+  
+  profiles    ProfilePermission[]
+  
+  @@map("permissions")
+}
+
+// Relacionamento N:N entre Perfis e Permissões + Dashboards específicos
+model ProfilePermission {
+  id           String @id @default(cuid())
+  
+  profileId    String
+  profile      Profile @relation(fields: [profileId], references: [id])
+  
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+  
+  // Dashboard específico (opcional - para permissões específicas de dashboard)
+  dashboardId  String?
+  dashboard    Dashboard? @relation(fields: [dashboardId], references: [id])
+  
+  @@unique([profileId, permissionId, dashboardId])
+  @@map("profile_permissions")
+}
+
+// Sessões para autenticação JWT
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("sessions")
+}

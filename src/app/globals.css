@@ -1,0 +1,211 @@
+/* src/app/globals.css - CSS OTIMIZADO E FUNCIONAL */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== CONFIGURAÇÕES BASE ===== */
+@layer base {
+  * {
+    @apply box-border;
+  }
+  
+  html {
+    @apply font-sans text-sm leading-relaxed;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+}
+
+/* ===== COMPONENTES PERSONALIZADOS ===== */
+@layer components {
+  /* Botões */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md font-medium transition-all duration-200 outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed min-h-[40px];
+  }
+  
+  .btn-primary {
+    @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md;
+  }
+  
+  .btn-secondary {
+    @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+  }
+  
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+
+  /* Inputs e Forms */
+  .input-field {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-md text-sm placeholder-gray-400 bg-white transition-colors duration-200;
+    @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:outline-none;
+    @apply disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed;
+  }
+  
+  .label-field {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+  }
+
+  /* Cards e Containers */
+  .card {
+    @apply bg-white rounded-lg border border-gray-200 shadow-sm p-6;
+  }
+  
+  .card-header {
+    @apply border-b border-gray-200 pb-4 mb-6;
+  }
+
+  /* Alertas */
+  .alert {
+    @apply p-4 rounded-md border-l-4 text-sm;
+  }
+  
+  .alert-error {
+    @apply alert bg-red-50 border-red-400 text-red-800;
+  }
+  
+  .alert-success {
+    @apply alert bg-green-50 border-green-400 text-green-800;
+  }
+  
+  .alert-warning {
+    @apply alert bg-yellow-50 border-yellow-400 text-yellow-800;
+  }
+  
+  .alert-info {
+    @apply alert bg-blue-50 border-blue-400 text-blue-800;
+  }
+
+  /* Dashboard específico */
+  .dashboard-container {
+    @apply min-h-screen bg-gray-50;
+  }
+  
+  .dashboard-header {
+    @apply bg-white shadow-sm border-b border-gray-200;
+  }
+  
+  .dashboard-sidebar {
+    @apply bg-white shadow rounded-lg p-6;
+  }
+  
+  .dashboard-item {
+    @apply w-full text-left p-3 rounded-md transition-all duration-200 border;
+    @apply hover:bg-gray-50 border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .dashboard-item-active {
+    @apply bg-blue-50 border-blue-200 text-blue-900;
+  }
+  
+  .dashboard-content {
+    @apply bg-white shadow rounded-lg overflow-hidden;
+  }
+  
+  .dashboard-empty {
+    @apply flex items-center justify-center h-96 text-center;
+  }
+
+  /* Iframe responsivo */
+  .iframe-container {
+    @apply relative w-full;
+    padding-bottom: 56.25%; /* Aspect ratio 16:9 */
+  }
+  
+  .iframe-responsive {
+    @apply absolute top-0 left-0 w-full h-full border-0 rounded-md;
+  }
+}
+
+/* ===== UTILITÁRIOS ADICIONAIS ===== */
+@layer utilities {
+  /* Animações suaves */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  /* Estados de loading */
+  .loading {
+    @apply opacity-70 pointer-events-none;
+  }
+  
+  /* Scrollbar personalizada */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  /* Gradientes */
+  .gradient-blue {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  
+  .gradient-gray {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  }
+}
+
+/* ===== KEYFRAMES ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(10px); 
+    opacity: 0; 
+  }
+  to { 
+    transform: translateY(0); 
+    opacity: 1; 
+  }
+}
+
+/* ===== RESPONSIVIDADE ESPECÍFICA ===== */
+@media (max-width: 640px) {
+  .dashboard-sidebar {
+    @apply mb-6;
+  }
+  
+  .btn {
+    @apply w-full justify-center;
+  }
+}
+
+/* ===== MELHORIAS DE ACESSIBILIDADE ===== */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== DARK MODE (opcional) ===== */
+@media (prefers-color-scheme: dark) {
+  /* Adicione estilos dark mode aqui se necessário */
+}

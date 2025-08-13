@@ -20,6 +20,8 @@ export async function authenticateApiRequest(request: NextRequest): Promise<{
   try {
     // 1. Tentar obter token do cookie (navegador)
     let token = request.cookies.get("auth-token")?.value;
+
+    console.log(`api=auth token ${token}`)
     
     // 2. Se não houver cookie, tentar header Authorization (APIs/mobile)
     if (!token) {

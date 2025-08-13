@@ -9,11 +9,14 @@ export default async function AdminPage() {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth-token")?.value;
 
+  console.log(`AdminPage token: ${token}`);
+
   if (!token) {
     redirect("/login");
   }
 
   const session = await verifyToken(token);
+  console.log(`AdminPage session: ${JSON.stringify(session)}`);
   if (!session) {
     redirect("/login");
   }
@@ -40,6 +43,7 @@ export default async function AdminPage() {
   } else if (canViewCompanies) {
     redirect("/admin/companies");
   } else {
+    console.log("Usuário não tem permissões administrativas, redirecionando para login");
     // Se não tem nenhuma permissão administrativa, redirecionar para login
     redirect("/login");
   }

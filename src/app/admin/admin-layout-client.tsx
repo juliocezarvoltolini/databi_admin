@@ -88,15 +88,7 @@ export default function AdminLayoutClient({
       href: "/admin/companies",
       permission: "canViewCompanies",
       description: "Gerenciar empresas do sistema",
-    },
-    {
-      id: "company",
-      name: "Empresa",
-      icon: "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H5m0 0h4M9 7h6m-6 4h6m-2 4h2M7 7h2v2H7V7z",
-      href: "/admin/company",
-      permission: "isAdmin",
-      description: "Configurações da empresa",
-    },
+    }
   ];
 
   // Filtrar itens baseado nas permissões
@@ -139,22 +131,14 @@ export default function AdminLayoutClient({
           {/* Header do sidebar */}
           <div className={`flex items-center justify-between h-16 border-b border-gray-200 ${sidebarCollapsed ? 'px-2' : 'px-6'}`}>
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img
+                  src="/Logo DataBi - Colorido fundo claro.svg"
+                  alt="DataBi Logo"
+                  className="w-8 h-8"
+                />
               </div>
-              {!sidebarCollapsed && <h1 className="text-lg font-bold text-gray-900">Admin</h1>}
+              {!sidebarCollapsed && <h1 className="text-lg font-bold text-gray-900">DataBi Admin</h1>}
             </div>
 
             <div className="flex items-center space-x-1">

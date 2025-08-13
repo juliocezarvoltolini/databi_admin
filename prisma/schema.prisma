@@ -16,75 +16,75 @@ datasource db {
 
 // Tabela principal das empresas (as "caixas")
 model Company {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique // URL amigável
-  logo        String?  // Caminho para logo da empresa
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique // URL amigável
+  logo      String? // Caminho para logo da empresa
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relacionamentos
-  users       User[]
-  dashboards  Dashboard[]
-  profiles    ProfileCompany[]  // Relação many-to-many com perfis
-  
+  users      User[]
+  dashboards Dashboard[]
+  profiles   ProfileCompany[] // Relação many-to-many com perfis
+
   @@map("companies")
 }
 
 // Usuários do sistema
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String
-  password    String   // Hash da senha
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String // Hash da senha
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   // Relacionamento com empresa (opcional para administradores do sistema)
-  companyId   String?
-  company     Company? @relation(fields: [companyId], references: [id])
-  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
   // Relacionamento com perfil
-  profileId   String
-  profile     Profile @relation(fields: [profileId], references: [id])
-  
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+
   // Sessões para autenticação
-  sessions    Session[]
-  
+  sessions Session[]
+
   @@map("users")
 }
 
 // Perfis/Roles que podem estar em múltiplas empresas
 model Profile {
   id          String   @id @default(cuid())
-  name        String   // Ex: "Admin", "Visualizador", "Gerente"
+  name        String // Ex: "Admin", "Visualizador", "Gerente"
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relacionamentos
   users       User[]
   permissions ProfilePermission[]
-  companies   ProfileCompany[]  // Relação many-to-many com empresas
-  
+  companies   ProfileCompany[] // Relação many-to-many com empresas
+
   @@map("profiles")
 }
 
 // Relacionamento N:N entre Perfis e Empresas
 model ProfileCompany {
-  id        String @id @default(cuid())
-  
+  id String @id @default(cuid())
+
   profileId String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  
+
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  
+
   createdAt DateTime @default(now())
-  
+
   @@unique([profileId, companyId])
   @@map("profile_companies")
 }
@@ -94,48 +94,41 @@ model Dashboard {
   id          String   @id @default(cuid())
   name        String
   description String?
-  powerbiUrl  String   // Link público do Power BI
+  powerbiUrl  String // Link público do Power BI
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   // Relacionamento com empresa
-  companyId   String?
-  company     Company?  @relation(fields: [companyId], references: [id])
-  
-  // Relacionamentos de acesso
-  permissions ProfilePermission[]
-  
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id])
+
   @@map("dashboards")
 }
 
 // Tabela de permissões (o que cada perfil pode fazer)
 model Permission {
-  id          String   @id @default(cuid())
-  name        String   @unique // Ex: "VIEW_DASHBOARD", "MANAGE_USERS", "CREATE_USERS"
+  id          String @id @default(cuid())
+  name        String @unique // Ex: "VIEW_DASHBOARD", "MANAGE_USERS", "CREATE_USERS"
   description String
-  category    String   // Ex: "DASHBOARD", "USER", "SYSTEM"
-  
-  profiles    ProfilePermission[]
-  
+  category    String // Ex: "DASHBOARD", "USER", "SYSTEM"
+
+  profiles ProfilePermission[]
+
   @@map("permissions")
 }
 
 // Relacionamento N:N entre Perfis e Permissões + Dashboards específicos
 model ProfilePermission {
-  id           String @id @default(cuid())
-  
-  profileId    String
-  profile      Profile @relation(fields: [profileId], references: [id])
-  
+  id String @id @default(cuid())
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+
   permissionId String
   permission   Permission @relation(fields: [permissionId], references: [id])
-  
-  // Dashboard específico (opcional - para permissões específicas de dashboard)
-  dashboardId  String?
-  dashboard    Dashboard? @relation(fields: [dashboardId], references: [id])
-  
-  @@unique([profileId, permissionId, dashboardId])
+
+  @@unique([profileId, permissionId])
   @@map("profile_permissions")
 }
 
@@ -146,8 +139,8 @@ model Session {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@map("sessions")
 }

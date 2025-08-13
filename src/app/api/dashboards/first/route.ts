@@ -1,34 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.headers.get("x-user-id");
-    const companyId = request.headers.get("x-company-id");
-
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Dados de autenticação necessários" },
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
+
+    const { user } = authResult;
 
     // Buscar o primeiro dashboard disponível para o usuário
     const dashboard = await prisma.dashboard.findFirst({
       where: {
-        companyId,
+        companyId: user.companyId,
         isActive: true,
-        permissions: {
-          some: {
-            profile: {
-              users: {
-                some: {
-                  id: userId,
-                },
-              },
-            },
-          },
-        },
+        
       },
       orderBy: {
         createdAt: "asc",

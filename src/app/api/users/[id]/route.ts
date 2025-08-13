@@ -1,43 +1,30 @@
 // src/app/api/users/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
-import { validateData, type ApiResponse } from "@/lib/types";
-import { z } from "zod";
+import { updateUserSchema, validateData, type ApiResponse } from "@/lib/types";
+import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
 
-const updateUserSchema = z.object({
-  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").optional(),
-  email: z.string().email("Email inválido").optional(),
-  password: z
-    .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres")
-    .optional(),
-  profileId: z.string().cuid().nullable().optional(),
-  isActive: z.boolean().optional(),
-});
+
 
 // GET - Buscar usuário específico
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const companyId = headersList.get("x-company-id");
-    const resolvedParams = await params;
-
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+    const resolvedParams = await params;
+
     // Verificar permissão
-    const canViewUsers = await hasPermission(userId, "VIEW_USERS");
+    const canViewUsers = await hasPermission(user.userId, "VIEW_USERS");
     if (!canViewUsers) {
       return NextResponse.json(
         {
@@ -49,10 +36,10 @@ export async function GET(
     }
 
     // Buscar usuário
-    const user = await prisma.user.findFirst({
+    const targetUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: companyId,
+        companyId: user.companyId,
       },
       select: {
         id: true,
@@ -71,7 +58,7 @@ export async function GET(
       },
     });
 
-    if (!user) {
+    if (!targetUser) {
       return NextResponse.json(
         { success: false, error: "Usuário não encontrado" } as ApiResponse,
         { status: 404 }
@@ -80,7 +67,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: user,
+      data: targetUser,
     } as ApiResponse);
   } catch (error) {
     console.error("Erro ao buscar usuário:", error);
@@ -97,20 +84,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const companyId = headersList.get("x-company-id");
-    const resolvedParams = await params;
-
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+    const resolvedParams = await params;
+
     // Verificar permissão
-    const canEditUsers = await hasPermission(userId, "EDIT_USERS");
+    const canEditUsers = await hasPermission(user.userId, "EDIT_USERS");
     if (!canEditUsers) {
       return NextResponse.json(
         {
@@ -142,7 +126,7 @@ export async function PUT(
     const existingUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: companyId,
+        companyId: user.companyId,
       },
     });
 
@@ -174,11 +158,6 @@ export async function PUT(
           where: {
             id: updateData.profileId,
             isActive: true,
-            companies: {
-              some: {
-                companyId: companyId,
-              },
-            },
           },
         });
 
@@ -191,7 +170,7 @@ export async function PUT(
 
         // Mesma validação de permissões do POST
         const currentUserProfile = await prisma.user.findUnique({
-          where: { id: userId },
+          where: { id: user.userId },
           include: {
             profile: {
               include: {
@@ -307,24 +286,21 @@ export async function PUT(
 
 // DELETE - Desativar usuário (soft delete)
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const companyId = headersList.get("x-company-id");
-    const resolvedParams = await params;
-
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+    const resolvedParams = await params;
+
     // Verificar permissão
-    const canDeleteUsers = await hasPermission(userId, "DELETE_USERS");
+    const canDeleteUsers = await hasPermission(user.userId, "DELETE_USERS");
     if (!canDeleteUsers) {
       return NextResponse.json(
         {
@@ -336,7 +312,7 @@ export async function DELETE(
     }
 
     // Não permitir que o usuário exclua a si mesmo
-    if (resolvedParams.id === userId) {
+    if (resolvedParams.id === user.userId) {
       return NextResponse.json(
         {
           success: false,
@@ -350,7 +326,7 @@ export async function DELETE(
     const existingUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: companyId,
+        companyId: user.companyId,
       },
     });
 

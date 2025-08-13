@@ -37,15 +37,24 @@ export default async function DashboardLayout({
     session.userId,
     "MANAGE_DASHBOARDS"
   );
-  const canViewCompanies = await hasPermission(session.userId, "VIEW_COMPANIES");
+  const canViewCompanies = await hasPermission(
+    session.userId,
+    "VIEW_COMPANIES"
+  );
   const isAdmin = await hasPermission(session.userId, "ADMIN_COMPANY");
 
   // Buscar dashboards da empresa para o menu lateral
-  const companyDashboards = user.company ? await prisma.dashboard.findMany({
-    where: {
-      companyId: user.company.id,
-      isActive: true,
-    },
+
+  const whereclause: any = {
+    isActive: true,
+  };
+
+  if (user.company) {
+    whereclause.companyId = user.company.id;
+  }
+
+  const companyDashboards = await prisma.dashboard.findMany({
+    where: whereclause,
     select: {
       id: true,
       name: true,
@@ -54,7 +63,7 @@ export default async function DashboardLayout({
     orderBy: {
       name: "asc",
     },
-  }) : [];
+  });
 
   return (
     <DashboardLayoutClient

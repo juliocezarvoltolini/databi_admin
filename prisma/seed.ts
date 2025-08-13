@@ -109,7 +109,6 @@ async function main() {
     let adminProfile = await prisma.profile.findFirst({
       where: {
         name: "Administrador",
-        companyId: demoCompany.id,
       },
     });
 
@@ -118,7 +117,7 @@ async function main() {
         data: {
           name: "Administrador",
           description: "Acesso total ao sistema da empresa",
-          companyId: demoCompany.id,
+
         },
       });
       console.log("✅ Perfil Administrador criado");
@@ -129,7 +128,6 @@ async function main() {
     let viewerProfile = await prisma.profile.findFirst({
       where: {
         name: "Visualizador",
-        companyId: demoCompany.id,
       },
     });
 
@@ -138,7 +136,6 @@ async function main() {
         data: {
           name: "Visualizador",
           description: "Apenas visualização de dashboards",
-          companyId: demoCompany.id,
         },
       });
       console.log("✅ Perfil Visualizador criado");
@@ -166,7 +163,7 @@ async function main() {
         data: {
           profileId: adminProfile.id,
           permissionId: permission.id,
-          dashboardId: null,
+       
         },
       });
       adminPermissionsCount++;
@@ -184,7 +181,7 @@ async function main() {
         data: {
           profileId: viewerProfile.id,
           permissionId: viewPermission.id,
-          dashboardId: null,
+     
         },
       });
       console.log("✅ Permissão VIEW_DASHBOARD atribuída ao Visualizador");
@@ -201,7 +198,7 @@ async function main() {
         email: "admin@demo.com",
         name: "Admin Demo",
         password: hashedPassword,
-        companyId: demoCompany.id,
+
         profileId: adminProfile.id,
       },
     });

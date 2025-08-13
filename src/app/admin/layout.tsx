@@ -37,20 +37,35 @@ export default async function AdminLayout({
     session.userId,
     "MANAGE_DASHBOARDS"
   );
-  const canViewCompanies = await hasPermission(session.userId, "VIEW_COMPANIES");
+  const canViewCompanies = await hasPermission(
+    session.userId,
+    "VIEW_COMPANIES"
+  );
   const isAdmin = await hasPermission(session.userId, "ADMIN_COMPANY");
 
   // Se não tem nenhuma permissão administrativa, redirecionar para login
-  if (!canViewUsers && !canViewProfiles && !canManageDashboards && !canViewCompanies && !isAdmin) {
+  if (
+    !canViewUsers &&
+    !canViewProfiles &&
+    !canManageDashboards &&
+    !canViewCompanies &&
+    !isAdmin
+  ) {
     redirect("/login");
   }
 
   // Buscar dashboards da empresa do usuário
-  const companyDashboards = user.company ? await prisma.dashboard.findMany({
-    where: {
-      companyId: user.company.id,
-      isActive: true,
-    },
+
+  const whereClaude: any = {
+    isActive: true,
+  };
+
+  if (user.companyId) {
+    whereClaude.companyId = user.companyId;
+  }
+
+  const companyDashboards = await prisma.dashboard.findMany({
+    where: whereClaude,
     select: {
       id: true,
       name: true,
@@ -59,7 +74,7 @@ export default async function AdminLayout({
     orderBy: {
       name: "asc",
     },
-  }) : [];
+  });
 
   return (
     <AdminLayoutClient

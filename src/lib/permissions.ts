@@ -5,16 +5,14 @@ import { prisma } from "@/lib/prisma";
  * Verifica se um usuário tem uma permissão específica
  * @param userId - ID do usuário
  * @param permissionName - Nome da permissão (ex: "VIEW_USERS", "CREATE_USERS")
- * @param dashboardId - ID do dashboard (opcional, para permissões específicas de dashboard)
  * @returns boolean - true se o usuário tem a permissão, false caso contrário
  */
 export async function hasPermission(
   userId: string | null,
-  permissionName: string,
-  dashboardId?: string
+  permissionName: string
 ): Promise<boolean> {
   try {
-    // CORRIGIDO: Validar se userId não é null/undefined
+    // Validar se userId não é null/undefined
     if (!userId) {
       console.error("hasPermission: userId é null ou undefined");
       return false;
@@ -24,7 +22,7 @@ export async function hasPermission(
     const user = await prisma.user.findUnique({
       where: {
         id: userId,
-        isActive: true, // CORRIGIDO: Verificar se o usuário está ativo
+        isActive: true,
       },
       include: {
         profile: {
@@ -49,16 +47,7 @@ export async function hasPermission(
 
     // Verificar se tem a permissão específica
     const hasGeneralPermission = user.profile.permissions.some((pp) => {
-      // Se não é uma permissão específica de dashboard
-      if (!dashboardId) {
-        return pp.permission.name === permissionName && pp.dashboardId === null;
-      }
-
-      // Se é uma permissão específica de dashboard
-      return (
-        pp.permission.name === permissionName &&
-        (pp.dashboardId === dashboardId || pp.dashboardId === null)
-      );
+      return pp.permission.name === permissionName;
     });
 
     return hasGeneralPermission;
@@ -82,8 +71,8 @@ export async function canAccessDashboard(
     return false;
   }
 
-  // Verificar se tem permissão VIEW_DASHBOARD para este dashboard específico
-  return await hasPermission(userId, "VIEW_DASHBOARD", dashboardId);
+  // Verificar se tem permissão VIEW_DASHBOARD
+  return await hasPermission(userId, "VIEW_DASHBOARD");
 }
 
 /**
@@ -108,7 +97,6 @@ export async function getUserPermissions(userId: string | null) {
             permissions: {
               include: {
                 permission: true,
-                dashboard: true,
               },
             },
           },
@@ -122,8 +110,6 @@ export async function getUserPermissions(userId: string | null) {
 
     return user.profile.permissions.map((pp) => ({
       permission: pp.permission,
-      dashboard: pp.dashboard,
-      dashboardId: pp.dashboardId,
     }));
   } catch (error) {
     console.error("Erro ao buscar permissões do usuário:", error);

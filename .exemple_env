@@ -9,3 +9,6 @@
 # one found in a remote Prisma Postgres URL, does not contain any sensitive information.
 
 DATABASE_URL="postgresql://admin:Hxep@5739@localhost:5432/dashboard_manager?schema=public"
+
+# JWT Secret - Gere uma chave forte para produção
+JWT_SECRET="sua-chave-secreta-super-forte-aqui-pelo-menos-32-caracteres-de-comprimento"

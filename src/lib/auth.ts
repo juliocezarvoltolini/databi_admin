@@ -110,7 +110,6 @@ export async function getCurrentUser(userId: string) {
           permissions: {
             include: {
               permission: true,
-              dashboard: true,
             },
           },
         },

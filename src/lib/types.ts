@@ -16,6 +16,17 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Senha é obrigatória"),
 });
 
+export const updateUserSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres").nonoptional(),
+  email: z.string().email("Email inválido").nonoptional(),
+  password: z
+    .string()
+    .min(6, "Senha deve ter pelo menos 6 caracteres")
+    .optional(),
+  profileId: z.string().cuid().nonoptional({error: "Perfil é obrigatório"}),
+  isActive: z.boolean().optional(),
+});
+
 // Schema para criar usuário
 export const createUserSchema = z.object({
   email: z.string().email("Email inválido"),

@@ -12,8 +12,11 @@ export default function WelcomePage() {
   const handleDashboardNavigation = async () => {
     try {
       const response = await fetch("/api/dashboards/first");
+ 
       if (response.ok) {
         const result = await response.json();
+        console.log("Dashboard encontrado, redirecionando...", result);
+        
         if (result.success && result.data) {
           router.push(`/dashboard/${result.data.id}`);
         } else {

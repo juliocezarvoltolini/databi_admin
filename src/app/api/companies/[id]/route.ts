@@ -1,29 +1,27 @@
 // src/app/api/companies/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createCompanySchema, validateData, type ApiResponse } from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";
+import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
 
 // GET - Buscar empresa específica
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const headersList = await headers();
-    const userId = headersList.get("x-user-id");
-    const resolvedParams = await params;
-
-    if (!userId) {
-      return NextResponse.json(
-        { success: false, error: "Não autorizado" } as ApiResponse,
-        { status: 401 }
-      );
+    // Autenticar usuário
+    const authResult = await authenticateApiRequest(request);
+    if (!authResult.success) {
+      return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const { user } = authResult;
+    const resolvedParams = await params;
+
     // Verificar permissão
-    const canViewCompanies = await hasPermission(userId, "VIEW_COMPANIES");
+    const canViewCompanies = await hasPermission(user.userId, "VIEW_COMPANIES");
     if (!canViewCompanies) {
       return NextResponse.json(
         {

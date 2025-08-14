@@ -1,5 +1,6 @@
 // src/app/api/companies/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { createCompanySchema, validateData, type ApiResponse } from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";

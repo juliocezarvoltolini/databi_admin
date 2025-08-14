@@ -7,6 +7,21 @@ import UserForm from "./user-form";
 import UserList from "./user-list";
 import { Profile } from "@/generated/prisma";
 
+interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+}
+
+interface ProfileWithPermissions {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  permissions: Permission[];
+}
+
 
 interface User {
   id: string;
@@ -50,7 +65,7 @@ interface Props {
 
 export default function UsersClient({ user, permissions, isSystemAdmin }: Props) {
   const [users, setUsers] = useState<UserData[]>([]);
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<ProfileWithPermissions[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

@@ -1,9 +1,23 @@
 // src/app/admin/users/user-list.tsx
 "use client";
 
-import { Profile } from "@/generated/prisma";
 import { useState } from "react";
 import { UserPermissions } from "./users-client";
+
+interface Permission {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+}
+
+interface ProfileWithPermissions {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  permissions: Permission[];
+}
 
 interface UserData {
   id: string;
@@ -21,7 +35,7 @@ interface UserData {
 
 interface Props {
   users: UserData[];
-  profiles: Profile[];
+  profiles: ProfileWithPermissions[];
   permission: UserPermissions;
   onEdit: (user: UserData) => void;
   onDelete: (userId: string) => void;

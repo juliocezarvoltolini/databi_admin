@@ -30,7 +30,21 @@ const userFormSchema = z.object({
   companyId: z.string().optional(),
 });
 
+// Schema específico para edição (senha opcional)
+const editUserFormSchema = z.object({
+  name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z
+    .string()
+    .min(6, "Senha deve ter pelo menos 6 caracteres")
+    .optional()
+    .or(z.literal("")),
+  profileId: z.string().optional(),
+  companyId: z.string().optional(),
+});
+
 type UserFormData = z.infer<typeof userFormSchema>;
+type EditUserFormData = z.infer<typeof editUserFormSchema>;
 
 interface UserData {
   id: string;
@@ -79,21 +93,12 @@ export default function UserForm({
 
   const isEditing = !!user;
 
-  // Schema específico para edição (senha opcional)
-  const editUserFormSchema = userFormSchema.extend({
-    password: z
-      .string()
-      .min(6, "Senha deve ter pelo menos 6 caracteres")
-      .optional()
-      .or(z.literal("")),
-  });
-
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
-  } = useForm<UserFormData>({
+  } = useForm<UserFormData | EditUserFormData>({
     resolver: zodResolver(isEditing ? editUserFormSchema : userFormSchema),
     defaultValues: {
       name: user?.name || "",
@@ -106,7 +111,7 @@ export default function UserForm({
   const selectedProfileId = watch("profileId");
   const selectedProfile = profiles.find((p: ProfileWithPermissions) => p.id === selectedProfileId);
 
-  const onSubmit = async (data: UserFormData) => {
+  const onSubmit = async (data: UserFormData | EditUserFormData) => {
     console.log("Passou aqui");
     setLoading(true);
     setError("");

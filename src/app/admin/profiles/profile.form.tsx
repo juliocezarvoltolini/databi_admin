@@ -1,19 +1,33 @@
 // src/app/admin/profiles/profile-form.tsx
 "use client";
 
-import { useState } from "react";
+
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  authenticateUser,
+  getCurrentUser,
+  verifyToken,
+} from "@/lib/auth";
+
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   permissions: z.array(z.string()).min(1, "Selecione pelo menos uma permissão"),
-  companyIds: z.array(z.string()).min(1, "Selecione pelo menos uma empresa"),
+  companyIds: z.array(z.string()).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  company: Company;
+}
 
 interface Permission {
   id: string;
@@ -40,6 +54,7 @@ interface Profile {
 }
 
 interface Props {
+  user: User
   profile?: Profile | null;
   allPermissions: Permission[];
   allCompanies: Company[];
@@ -48,6 +63,7 @@ interface Props {
 }
 
 export default function ProfileForm({
+  user,
   profile,
   allPermissions,
   allCompanies,
@@ -58,6 +74,8 @@ export default function ProfileForm({
   const [error, setError] = useState("");
 
   const isEditing = !!profile;
+
+
 
   const {
     register,
@@ -123,6 +141,7 @@ export default function ProfileForm({
   };
 
   const handleCompanyChange = (companyId: string, checked: boolean) => {
+    const isEditing = !!profile;
     const currentCompanies = getValues("companyIds");
 
     if (checked) {
@@ -145,6 +164,10 @@ export default function ProfileForm({
   const onSubmit = async (data: ProfileFormData) => {
     setLoading(true);
     setError("");
+
+    if (allCompanies.length == 0 && user.company) {
+      data.companyIds.push(user.company.id);
+    }
 
     try {
       const url = isEditing ? `/api/profiles/${profile.id}` : "/api/profiles";
@@ -235,7 +258,7 @@ export default function ProfileForm({
             {errors.companyIds.message}
           </p>
         )}
-        
+
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {allCompanies.map((company) => (
             <label
@@ -255,9 +278,7 @@ export default function ProfileForm({
                 <p className="text-sm font-medium text-gray-900">
                   {company.name}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {company.slug}
-                </p>
+                <p className="text-xs text-gray-500">{company.slug}</p>
               </div>
             </label>
           ))}
@@ -389,7 +410,7 @@ export default function ProfileForm({
 
         <button
           type="submit"
-          disabled={loading || selectedPermissions.length === 0 || selectedCompanies.length === 0}
+          disabled={loading || selectedPermissions.length === 0}
           className="btn-primary"
         >
           {loading ? (

@@ -3,6 +3,7 @@ import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import { UserSession, userSessionSchema } from "./types";
+import { User } from "@/generated/prisma";
 
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);

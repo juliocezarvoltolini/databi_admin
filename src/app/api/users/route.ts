@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { createUserSchema, validateData, type ApiResponse } from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";
-import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
+import {
+  authenticateApiRequest,
+  createAuthErrorResponse,
+} from "@/lib/api-auth";
 
 // GET - Listar usuários da empresa
 export async function GET(request: NextRequest) {
@@ -31,10 +34,10 @@ export async function GET(request: NextRequest) {
 
     // Buscar usuários da empresa (ou todos se for administrador do sistema)
 
-    const whereClause = user.companyId 
+    const whereClause = user.companyId
       ? { companyId: user.companyId, isActive: true }
       : { isActive: true };
-    
+
     const users = await prisma.user.findMany({
       where: whereClause,
       select: {
@@ -127,10 +130,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    //Se não tem companyId então o usuário é um administrador do sistema.
+    if (!user.companyId && companyId) {
+      const exixteRelacao = await prisma.profileCompany.findFirst({
+        where: {
+          companyId: companyId,
+          profileId: profileId,
+        },
+      });
+
+      if (!exixteRelacao) {
+        const relacaoCriada = await prisma.profileCompany.create({
+          data: { companyId: companyId, profileId: profileId },
+        });
+      }
+    }
+
     // Determinar a empresa do novo usuário
     // Se companyId for fornecido explicitamente (incluindo null), usar ele
     // Se não for fornecido, usar a empresa do usuário atual
-    const targetCompanyId = companyId !== undefined ? companyId : user.companyId;
+    const targetCompanyId =
+      companyId !== undefined ? companyId : user.companyId;
 
     // Verificar se o perfil existe e está associado à empresa correta (se houver empresa)
     const profileWhere: any = {
@@ -153,11 +173,11 @@ export async function POST(request: NextRequest) {
 
     if (!profile) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: targetCompanyId 
-            ? "Perfil inválido ou não disponível para esta empresa" 
-            : "Perfil inválido" 
+        {
+          success: false,
+          error: targetCompanyId
+            ? "Perfil inválido ou não disponível para esta empresa"
+            : "Perfil inválido",
         } as ApiResponse,
         { status: 400 }
       );
@@ -166,7 +186,7 @@ export async function POST(request: NextRequest) {
     // Verificar se o usuário atual pode atribuir este perfil
     // (só pode atribuir perfis com permissões que ele mesmo possui)
     const currentUserProfile = await prisma.user.findUnique({
-      where: { id: user.userId},
+      where: { id: user.userId },
       include: {
         profile: {
           include: {
@@ -213,10 +233,9 @@ export async function POST(request: NextRequest) {
     });
 
     if (targetProfile) {
-      const currentUserPermissions =
-        currentUserProfile.profile.permissions.map(
-          (pp) => pp.permission.name
-        );
+      const currentUserPermissions = currentUserProfile.profile.permissions.map(
+        (pp) => pp.permission.name
+      );
       const targetPermissions = targetProfile.permissions.map(
         (pp) => pp.permission.name
       );

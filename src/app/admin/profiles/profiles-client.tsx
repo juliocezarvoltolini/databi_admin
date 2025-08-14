@@ -6,7 +6,6 @@ import ProfileForm from "./profile.form";
 import ProfileList from "./profile-list";
 import { Company } from "@/generated/prisma";
 
-
 interface User {
   id: string;
   name: string;
@@ -43,7 +42,7 @@ interface Props {
   permissions: Permissions;
 }
 
-export default function ProfilesClient({ permissions }: Props) {
+export default function ProfilesClient({ user, permissions }: Props) {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
   const [allCompanies, setAllCompanies] = useState<Company[]>([]);
@@ -180,6 +179,12 @@ export default function ProfilesClient({ permissions }: Props) {
           </div>
 
           <ProfileForm
+            user={{
+              id: user.id,
+              company: user.company,
+              email: user.email,
+              name: user.name,
+            }}
             profile={editingProfile}
             allPermissions={allPermissions}
             allCompanies={allCompanies}

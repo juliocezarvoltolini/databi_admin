@@ -231,8 +231,7 @@ export async function POST(request: NextRequest) {
         await tx.profilePermission.createMany({
           data: permissions.map((permissionId: string) => ({
             profileId: profile.id,
-            permissionId,
-            dashboardId: null as string | null,
+            permissionId
           })),
         });
       }

@@ -158,18 +158,6 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="text-center">
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <p className="text-sm text-blue-800 font-medium mb-2">
-                🚀 Credenciais para teste:
-              </p>
-              <p className="text-sm text-blue-700">
-                <strong>Email:</strong> admin@demo.com
-                <br />
-                <strong>Senha:</strong> admin123
-              </p>
-            </div>
-          </div>
         </form>
       </div>
     </div>

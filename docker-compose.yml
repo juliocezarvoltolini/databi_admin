@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: dashboard-manager-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dashboard_user
+      POSTGRES_PASSWORD: dashboard_password
+      POSTGRES_DB: dashboard_manager
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    networks:
+      - dashboard-network
+
+  app:
+    build: .
+    container_name: dashboard-manager-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://dashboard_user:dashboard_password@postgres:5432/dashboard_manager
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    networks:
+      - dashboard-network
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
+
+# volumes:
+  # postgres_data:
+
+networks:
+  dashboard-network:
+    driver: bridge

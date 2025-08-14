@@ -29,7 +29,7 @@ services:
       - postgres
     networks:
       - dashboard-network
-    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
+    command: sh -c "ls -la prisma/ && ls -la prisma/migrations/ && npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
 
 # volumes:
   # postgres_data:

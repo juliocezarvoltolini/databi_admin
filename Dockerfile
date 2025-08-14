@@ -43,6 +43,12 @@ COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 
+# Copy package.json for potential runtime commands
+COPY --from=builder /app/package.json ./package.json
+
+# Ensure migrations are copied (explicit copy for clarity)
+COPY --from=builder /app/prisma/migrations ./prisma/migrations
+
 USER nextjs
 
 EXPOSE 3000

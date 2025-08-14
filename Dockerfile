@@ -39,15 +39,12 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Copy node_modules for runtime dependencies (needed for seed script)
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 
-# Copy Prisma files
+# Copy Prisma files and generated code
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/src/generated ./src/generated
 
 # Copy package.json for potential runtime commands
 COPY --from=builder /app/package.json ./package.json
-
-# Ensure migrations are copied (explicit copy for clarity)
-COPY --from=builder /app/prisma/migrations ./prisma/migrations
 
 USER nextjs
 

@@ -24,12 +24,12 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://dashboard_user:dashboard_password@postgres:5432/dashboard_manager
     ports:
-      - "3000:3005"
+      - "3005:3000"
     depends_on:
       - postgres
     networks:
       - dashboard-network
-    command: sh -c "ls -la prisma/ && ls -la prisma/migrations/ && npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
 
 # volumes:
   # postgres_data:

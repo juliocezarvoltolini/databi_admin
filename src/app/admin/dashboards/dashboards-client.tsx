@@ -5,6 +5,18 @@ import { useState, useEffect } from "react";
 import DashboardForm from "./dashboard-form";
 import DashboardList from "./dashboard-list";
 import { Company } from "@/generated/prisma";
+import { 
+  AdminLayout, 
+  PageHeader, 
+  StatsCard, 
+  AdminCard, 
+  AdminButton, 
+  LoadingSpinner,
+  DashboardIcon,
+  CheckCircleIcon,
+  LinkIcon,
+  PlusIcon
+} from "@/components/admin";
 
 interface User {
   id: string;
@@ -129,36 +141,28 @@ export default function DashboardsClient({ user, permissions }: Props) {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Carregando dashboards..." />;
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Gestão de Dashboards</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Gerencie os dashboards do Power BI da empresa
-        </p>
-      </div>
+    <AdminLayout>
+      <PageHeader
+        title="Gestão de Dashboards"
+        subtitle="Gerencie os dashboards do Power BI da empresa"
+        icon={<DashboardIcon />}
+      />
 
-      {error && <div className="alert-error mb-6">{error}</div>}
+      {error && (
+        <AdminCard variant="elevated" className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+          <div className="text-red-800 dark:text-red-200">{error}</div>
+        </AdminCard>
+      )}
 
       {showForm ? (
-        <div className="card">
-          <div className="card-header">
-            <h2 className="text-lg font-medium text-gray-900">
-              {editingDashboard ? "Editar Dashboard" : "Novo Dashboard"}
-            </h2>
-          </div>
-
+        <AdminCard
+          title={editingDashboard ? "Editar Dashboard" : "Novo Dashboard"}
+          variant="elevated"
+        >
           <DashboardForm
             dashboard={editingDashboard}
             allCompanies={allCompanies}
@@ -166,112 +170,56 @@ export default function DashboardsClient({ user, permissions }: Props) {
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />
-        </div>
+        </AdminCard>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Ações principais */}
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-medium text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Dashboards da Empresa
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Configure dashboards do Power BI para sua empresa
               </p>
             </div>
 
             {permissions.canCreate && (
-              <button onClick={handleCreateDashboard} className="btn-primary">
-                + Novo Dashboard
-              </button>
+              <AdminButton
+                onClick={handleCreateDashboard}
+                icon={<PlusIcon />}
+                variant="primary"
+              >
+                Novo Dashboard
+              </AdminButton>
             )}
           </div>
 
           {/* Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Total de Dashboards
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboards.length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Total de Dashboards"
+              value={dashboards.length}
+              icon={<DashboardIcon />}
+              color="blue"
+              description="Dashboards cadastrados"
+            />
 
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Dashboards Ativos
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboards.filter((d) => d.isActive).length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Dashboards Ativos"
+              value={dashboards.filter((d) => d.isActive).length}
+              icon={<CheckCircleIcon />}
+              color="green"
+              description="Dashboards ativos e funcionais"
+            />
 
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-purple-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Links Configurados
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {dashboards.filter((d) => d.powerbiUrl).length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Links Configurados"
+              value={dashboards.filter((d) => d.powerbiUrl).length}
+              icon={<LinkIcon />}
+              color="purple"
+              description="Dashboards com URLs do Power BI"
+            />
           </div>
 
           {/* Lista de dashboards */}
@@ -283,6 +231,6 @@ export default function DashboardsClient({ user, permissions }: Props) {
           />
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

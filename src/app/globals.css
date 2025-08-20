@@ -10,11 +10,12 @@
   }
   
   html {
-    @apply font-sans text-sm leading-relaxed;
+    @apply font-sans text-sm leading-relaxed h-full;
   }
   
   body {
-    @apply bg-gray-50 text-gray-900 antialiased;
+    @apply bg-gray-50 text-gray-900 antialiased h-full;
+    @apply dark:bg-gray-900 dark:text-gray-100;
   }
 }
 
@@ -27,10 +28,12 @@
   
   .btn-primary {
     @apply btn bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm hover:shadow-md;
+    @apply dark:bg-blue-700 dark:hover:bg-blue-800;
   }
   
   .btn-secondary {
     @apply btn bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500;
+    @apply dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700;
   }
   
   .btn-danger {
@@ -42,19 +45,24 @@
     @apply block w-full px-3 py-2 border border-gray-300 rounded-md text-sm placeholder-gray-400 bg-white transition-colors duration-200;
     @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20 focus:outline-none;
     @apply disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed;
+    @apply dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400;
+    @apply dark:focus:border-blue-400 dark:disabled:bg-gray-700;
   }
   
   .label-field {
     @apply block text-sm font-medium text-gray-700 mb-2;
+    @apply dark:text-gray-300;
   }
 
   /* Cards e Containers */
   .card {
     @apply bg-white rounded-lg border border-gray-200 shadow-sm p-6;
+    @apply dark:bg-gray-800 dark:border-gray-700;
   }
   
   .card-header {
     @apply border-b border-gray-200 pb-4 mb-6;
+    @apply dark:border-gray-700;
   }
 
   /* Alertas */
@@ -64,44 +72,54 @@
   
   .alert-error {
     @apply alert bg-red-50 border-red-400 text-red-800;
+    @apply dark:bg-red-900 dark:border-red-500 dark:text-red-200;
   }
   
   .alert-success {
     @apply alert bg-green-50 border-green-400 text-green-800;
+    @apply dark:bg-green-900 dark:border-green-500 dark:text-green-200;
   }
   
   .alert-warning {
     @apply alert bg-yellow-50 border-yellow-400 text-yellow-800;
+    @apply dark:bg-yellow-900 dark:border-yellow-500 dark:text-yellow-200;
   }
   
   .alert-info {
     @apply alert bg-blue-50 border-blue-400 text-blue-800;
+    @apply dark:bg-blue-900 dark:border-blue-500 dark:text-blue-200;
   }
 
   /* Dashboard específico */
   .dashboard-container {
     @apply min-h-screen bg-gray-50;
+    @apply dark:bg-gray-900;
   }
   
   .dashboard-header {
     @apply bg-white shadow-sm border-b border-gray-200;
+    @apply dark:bg-gray-800 dark:border-gray-700;
   }
   
   .dashboard-sidebar {
     @apply bg-white shadow rounded-lg p-6;
+    @apply dark:bg-gray-800;
   }
   
   .dashboard-item {
     @apply w-full text-left p-3 rounded-md transition-all duration-200 border;
     @apply hover:bg-gray-50 border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500;
+    @apply dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-blue-400;
   }
   
   .dashboard-item-active {
     @apply bg-blue-50 border-blue-200 text-blue-900;
+    @apply dark:bg-blue-900 dark:border-blue-500 dark:text-blue-200;
   }
   
   .dashboard-content {
     @apply bg-white shadow rounded-lg overflow-hidden;
+    @apply dark:bg-gray-800;
   }
   
   .dashboard-empty {
@@ -116,6 +134,41 @@
   
   .iframe-responsive {
     @apply absolute top-0 left-0 w-full h-full border-0 rounded-md;
+  }
+
+  /* Dashboard maximizado no admin */
+  .admin-dashboard-container {
+    @apply h-full flex flex-col;
+  }
+  
+  .admin-dashboard-content {
+    @apply flex-1 overflow-hidden relative;
+  }
+
+  
+  /* Overlays para cobrir elementos do PowerBI */
+  .powerbi-overlay-top {
+    @apply absolute top-0 left-0 w-full h-4 pointer-events-none;
+    @apply bg-white dark:bg-gray-800;
+    z-index: 5;
+  }
+  
+  .powerbi-overlay-bottom {
+    @apply absolute bottom-0 left-0 w-full h-12 pointer-events-none;
+    @apply bg-white dark:bg-gray-800;
+    z-index: 5;
+  }
+  
+  .powerbi-overlay-left {
+    @apply absolute top-0 left-0 w-8 h-full pointer-events-none;
+    @apply bg-white dark:bg-gray-800;
+    z-index: 5;
+  }
+  
+  .powerbi-overlay-right {
+    @apply absolute top-0 right-0 w-8 h-full pointer-events-none;
+    @apply bg-white dark:bg-gray-800;
+    z-index: 5;
   }
 }
 
@@ -148,14 +201,17 @@
   
   .scrollbar-thin::-webkit-scrollbar-track {
     @apply bg-gray-100;
+    @apply dark:bg-gray-800;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full;
+    @apply dark:bg-gray-600;
   }
   
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     @apply bg-gray-400;
+    @apply dark:bg-gray-500;
   }
 
   /* Gradientes */
@@ -205,7 +261,7 @@
   }
 }
 
-/* ===== DARK MODE (opcional) ===== */
-@media (prefers-color-scheme: dark) {
-  /* Adicione estilos dark mode aqui se necessário */
+/* ===== DARK MODE ===== */
+.dark {
+  color-scheme: dark;
 }

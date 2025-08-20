@@ -5,6 +5,18 @@ import { useState, useEffect } from "react";
 import ProfileForm from "./profile.form";
 import ProfileList from "./profile-list";
 import { Company } from "@/generated/prisma";
+import { 
+  AdminLayout, 
+  PageHeader, 
+  StatsCard, 
+  AdminCard, 
+  AdminButton, 
+  LoadingSpinner,
+  ProfilesIcon,
+  CheckCircleIcon,
+  UsersIcon,
+  PlusIcon
+} from "@/components/admin";
 
 interface User {
   id: string;
@@ -148,36 +160,28 @@ export default function ProfilesClient({ user, permissions }: Props) {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner fullScreen message="Carregando perfis..." />;
   }
 
   return (
-    <div className="p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Gestão de Perfis</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Gerencie os perfis de acesso e suas permissões na empresa
-        </p>
-      </div>
+    <AdminLayout>
+      <PageHeader
+        title="Gestão de Perfis"
+        subtitle="Gerencie os perfis de acesso e suas permissões na empresa"
+        icon={<ProfilesIcon />}
+      />
 
-      {error && <div className="alert-error mb-6">{error}</div>}
+      {error && (
+        <AdminCard variant="elevated" className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+          <div className="text-red-800 dark:text-red-200">{error}</div>
+        </AdminCard>
+      )}
 
       {showForm ? (
-        <div className="card">
-          <div className="card-header">
-            <h2 className="text-lg font-medium text-gray-900">
-              {editingProfile ? "Editar Perfil" : "Novo Perfil"}
-            </h2>
-          </div>
-
+        <AdminCard
+          title={editingProfile ? "Editar Perfil" : "Novo Perfil"}
+          variant="elevated"
+        >
           <ProfileForm
             user={{
               id: user.id,
@@ -191,115 +195,59 @@ export default function ProfilesClient({ user, permissions }: Props) {
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />
-        </div>
+        </AdminCard>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Ações principais */}
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-lg font-medium text-gray-900">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                 Perfis da Empresa
               </h2>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Configure perfis de acesso e suas permissões
               </p>
             </div>
 
             {permissions.canCreate && (
-              <button onClick={handleCreateProfile} className="btn-primary">
-                + Novo Perfil
-              </button>
+              <AdminButton
+                onClick={handleCreateProfile}
+                icon={<PlusIcon />}
+                variant="primary"
+              >
+                Novo Perfil
+              </AdminButton>
             )}
           </div>
 
           {/* Estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-blue-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Total de Perfis
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {profiles.length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Total de Perfis"
+              value={profiles.length}
+              icon={<ProfilesIcon />}
+              color="blue"
+              description="Perfis cadastrados"
+            />
 
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Perfis Ativos
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {profiles.filter((p) => p.isActive).length}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Perfis Ativos"
+              value={profiles.filter((p) => p.isActive).length}
+              icon={<CheckCircleIcon />}
+              color="green"
+              description="Perfis ativos e funcionais"
+            />
 
-            <div className="card">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <svg
-                    className="w-6 h-6 text-purple-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1M13 7a4 4 0 11-8 0 4 4 0 016 0z"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">
-                    Usuários com Perfil
-                  </p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {profiles.reduce(
-                      (total, profile) => total + profile.userCount,
-                      0
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+            <StatsCard
+              title="Usuários com Perfil"
+              value={profiles.reduce(
+                (total, profile) => total + profile.userCount,
+                0
+              )}
+              icon={<UsersIcon />}
+              color="purple"
+              description="Usuários com perfis atribuídos"
+            />
           </div>
 
           {/* Lista de perfis */}
@@ -311,6 +259,6 @@ export default function ProfilesClient({ user, permissions }: Props) {
           />
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }

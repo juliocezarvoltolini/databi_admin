@@ -142,56 +142,37 @@ export default function DashboardList({
           {filteredDashboards.map((dashboard) => (
             <div
               key={dashboard.id}
-              className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+              className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
             >
               {/* Header do dashboard */}
-              <div className="p-4 bg-gray-50 border-b border-gray-200">
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
-                      <h4 className="text-lg font-medium text-gray-900">
+                      <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         {dashboard.name}
                       </h4>
 
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           dashboard.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                            : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                         }`}
                       >
                         {dashboard.isActive ? "Ativo" : "Inativo"}
                       </span>
 
-                      <button
-                        onClick={() => openDashboard(dashboard.powerbiUrl)}
-                        className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
-                        title="Abrir dashboard"
-                      >
-                        <svg
-                          className="w-3 h-3 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                          />
-                        </svg>
-                        Abrir
-                      </button>
+                      
                     </div>
 
                     {dashboard.description && (
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                         {dashboard.description}
                       </p>
                     )}
 
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       Criado em {formatDate(dashboard.createdAt)}
                     </p>
                   </div>
@@ -222,7 +203,7 @@ export default function DashboardList({
                     {permissions.canEdit && (
                       <button
                         onClick={() => onEdit(dashboard)}
-                        className="p-2 text-blue-600 hover:text-blue-800 rounded-md hover:bg-blue-50"
+                        className="p-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900"
                         title="Editar dashboard"
                       >
                         <svg
@@ -244,7 +225,7 @@ export default function DashboardList({
                     {permissions.canDelete && (
                       <button
                         onClick={() => onDelete(dashboard.id)}
-                        className="p-2 text-red-600 hover:text-red-800 rounded-md hover:bg-red-50"
+                        className="p-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 rounded-md hover:bg-red-50 dark:hover:bg-red-900"
                         title="Excluir dashboard"
                       >
                         <svg
@@ -279,7 +260,9 @@ export default function DashboardList({
                         {dashboard.powerbiUrl}
                       </code>
                       <button
-                        onClick={() => navigator.clipboard.writeText(dashboard.powerbiUrl)}
+                        onClick={() =>
+                          navigator.clipboard.writeText(dashboard.powerbiUrl)
+                        }
                         className="p-2 text-gray-500 hover:text-gray-700 rounded-md hover:bg-gray-100"
                         title="Copiar URL"
                       >
@@ -320,11 +303,17 @@ export default function DashboardList({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium text-gray-500">ID:</span>
-                      <span className="ml-2 font-mono text-gray-900">{dashboard.id}</span>
+                      <span className="ml-2 font-mono text-gray-900">
+                        {dashboard.id}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-500">Empresa:</span>
-                      <span className="ml-2 text-gray-900">{dashboard.company.name}</span>
+                      <span className="font-medium text-gray-500">
+                        Empresa:
+                      </span>
+                      <span className="ml-2 text-gray-900">
+                        {dashboard.company.name}
+                      </span>
                     </div>
                   </div>
                 </div>

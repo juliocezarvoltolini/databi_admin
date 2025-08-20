@@ -220,30 +220,34 @@ export default function ProfileForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {error && <div className="alert-error">{error}</div>}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
 
       {/* Informações básicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="label-field">Nome do Perfil</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do Perfil</label>
           <input
             {...register("name")}
             type="text"
-            className="input-field"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Ex: Gerente, Analista, etc."
             disabled={loading}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
           )}
         </div>
 
         <div>
-          <label className="label-field">Descrição (opcional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descrição (opcional)</label>
           <input
             {...register("description")}
             type="text"
-            className="input-field"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
             placeholder="Descreva o propósito deste perfil"
             disabled={loading}
           />
@@ -252,9 +256,9 @@ export default function ProfileForm({
 
       {/* Empresas */}
       <div>
-        <label className="label-field">Empresas</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empresas</label>
         {errors.companyIds && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {errors.companyIds.message}
           </p>
         )}
@@ -263,7 +267,7 @@ export default function ProfileForm({
           {allCompanies.map((company) => (
             <label
               key={company.id}
-              className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+              className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
             >
               <input
                 type="checkbox"
@@ -271,14 +275,14 @@ export default function ProfileForm({
                 onChange={(e) =>
                   handleCompanyChange(company.id, e.target.checked)
                 }
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                 disabled={loading}
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {company.name}
                 </p>
-                <p className="text-xs text-gray-500">{company.slug}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{company.slug}</p>
               </div>
             </label>
           ))}
@@ -287,9 +291,9 @@ export default function ProfileForm({
 
       {/* Permissões */}
       <div>
-        <label className="label-field">Permissões</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissões</label>
         {errors.permissions && (
-          <p className="mt-1 text-sm text-red-600">
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {errors.permissions.message}
           </p>
         )}
@@ -299,12 +303,12 @@ export default function ProfileForm({
             ([category, permissions]) => (
               <div
                 key={category}
-                className="border border-gray-200 rounded-lg p-4"
+                className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4"
               >
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <svg
-                      className="w-5 h-5 text-gray-600"
+                      className="w-5 h-5 text-gray-600 dark:text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -316,10 +320,10 @@ export default function ProfileForm({
                         d={categoryIcons[category]}
                       />
                     </svg>
-                    <h3 className="text-sm font-medium text-gray-900">
+                    <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {categoryNames[category] || category}
                     </h3>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
                       ({permissions.length} permissões)
                     </span>
                   </div>
@@ -331,10 +335,10 @@ export default function ProfileForm({
                       onChange={(e) =>
                         handleSelectAllCategory(category, e.target.checked)
                       }
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                       disabled={loading}
                     />
-                    <span className="text-gray-600">Selecionar todas</span>
+                    <span className="text-gray-700 dark:text-gray-300">Selecionar todas</span>
                   </label>
                 </div>
 
@@ -342,7 +346,7 @@ export default function ProfileForm({
                   {permissions.map((permission) => (
                     <label
                       key={permission.id}
-                      className="flex items-start space-x-3 p-3 border border-gray-100 rounded-md hover:bg-gray-50 cursor-pointer"
+                      className="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
                     >
                       <input
                         type="checkbox"
@@ -353,14 +357,14 @@ export default function ProfileForm({
                             e.target.checked
                           )
                         }
-                        className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="mt-1 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                         disabled={loading}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {permission.description}
                         </p>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {permission.name}
                         </p>
                       </div>
@@ -375,8 +379,8 @@ export default function ProfileForm({
 
       {/* Resumo das permissões selecionadas */}
       {selectedPermissions.length > 0 && (
-        <div className="card bg-blue-50 border-blue-200">
-          <h4 className="font-medium text-blue-900 mb-2">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <h4 className="font-medium text-blue-800 dark:text-blue-300 mb-2">
             Resumo - {selectedPermissions.length} permissão(ões) selecionada(s)
           </h4>
           <div className="flex flex-wrap gap-2">
@@ -387,7 +391,7 @@ export default function ProfileForm({
               return permission ? (
                 <span
                   key={permissionId}
-                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
                 >
                   {permission.description}
                 </span>
@@ -398,12 +402,12 @@ export default function ProfileForm({
       )}
 
       {/* Ações */}
-      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="btn-secondary"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
         >
           Cancelar
         </button>
@@ -411,7 +415,7 @@ export default function ProfileForm({
         <button
           type="submit"
           disabled={loading || selectedPermissions.length === 0}
-          className="btn-primary"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
         >
           {loading ? (
             <div className="flex items-center">

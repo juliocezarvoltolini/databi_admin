@@ -9,8 +9,8 @@ import { z } from "zod";
 const dashboardFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
-  powerbiUrl: z.string().url("URL do Power BI inválida"),
-  companyId: z.string().cuid().optional(),
+  powerbiUrl: z.string().min(1, "URL do Power BI é obrigatória").url("URL do Power BI inválida"),
+  companyId: z.string().optional(),
 });
 
 type DashboardFormData = z.infer<typeof dashboardFormSchema>;
@@ -73,13 +73,15 @@ export default function DashboardForm({
   const powerbiUrl = watch("powerbiUrl");
 
   const onSubmit = async (data: DashboardFormData) => {
+    console.log("🚀 onSubmit chamado!");
+    console.log("Dados do formulário:", data);
     setLoading(true);
     setError("");
 
     try {
       const url = isEditing ? `/api/dashboards/${dashboard.id}` : "/api/dashboards";
       const method = isEditing ? "PUT" : "POST";
-
+      console.log("Enviando dados para a API:", data);
       const response = await fetch(url, {
         method,
         headers: {
@@ -89,6 +91,8 @@ export default function DashboardForm({
       });
 
       const result = await response.json();
+
+      console.log("Resultado da API:", result);
 
       if (result.success) {
         onSuccess();
@@ -109,8 +113,18 @@ export default function DashboardForm({
     return url.includes("app.powerbi.com") || url.includes("powerbi.microsoft.com");
   };
 
+  const handleFormSubmit = handleSubmit(
+    (data) => {
+      console.log("✅ Validação passou, chamando onSubmit:", data);
+      onSubmit(data);
+    },
+    (errors) => {
+      console.log("❌ Erros de validação:", errors);
+    }
+  );
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleFormSubmit} className="space-y-6">
       {error && <div className="alert-error">{error}</div>}
 
       {/* Informações básicas */}
@@ -243,8 +257,9 @@ export default function DashboardForm({
 
         <button
           type="submit"
-          disabled={loading || !powerbiUrl || !isValidPowerBIUrl(powerbiUrl)}
+          disabled={loading}
           className="btn-primary"
+          onClick={() => console.log("🔴 Botão clicado!")}
         >
           {loading ? (
             <div className="flex items-center">

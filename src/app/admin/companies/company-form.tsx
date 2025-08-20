@@ -89,7 +89,7 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {errors.general && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-md">
           {errors.general}
         </div>
       )}
@@ -99,7 +99,7 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
         <div>
           <label
             htmlFor="name"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Nome da Empresa
           </label>
@@ -108,14 +108,14 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
             id="name"
             value={formData.name}
             onChange={(e) => handleNameChange(e.target.value)}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.name ? "border-red-300" : "border-gray-300"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.name ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
             }`}
             placeholder="Ex: Empresa ABC Ltda"
             required
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name}</p>
           )}
         </div>
 
@@ -123,7 +123,7 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
         <div>
           <label
             htmlFor="slug"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
           >
             Slug (URL amigável)
           </label>
@@ -132,8 +132,8 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
             id="slug"
             value={formData.slug}
             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.slug ? "border-red-300" : "border-gray-300"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.slug ? "border-red-300 dark:border-red-600" : "border-gray-300 dark:border-gray-600"
             }`}
             placeholder="Ex: empresa-abc"
             pattern="[a-z0-9-]+"
@@ -141,9 +141,9 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
             required
           />
           {errors.slug && (
-            <p className="mt-1 text-sm text-red-600">{errors.slug}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.slug}</p>
           )}
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Usado na URL da empresa. Apenas letras minúsculas, números e hífens.
           </p>
         </div>
@@ -151,40 +151,40 @@ export default function CompanyForm({ company, onSuccess, onCancel }: Props) {
 
       {/* Informações adicionais para edição */}
       {company && (
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-900 mb-3">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
             Informações da Empresa
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
-              <span className="text-gray-500">Usuários:</span>
-              <span className="ml-2 font-medium">{company.userCount}</span>
+              <span className="text-gray-500 dark:text-gray-400">Usuários:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{company.userCount}</span>
             </div>
             <div>
-              <span className="text-gray-500">Dashboards:</span>
-              <span className="ml-2 font-medium">{company.dashboardCount}</span>
+              <span className="text-gray-500 dark:text-gray-400">Dashboards:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{company.dashboardCount}</span>
             </div>
             <div>
-              <span className="text-gray-500">Perfis:</span>
-              <span className="ml-2 font-medium">{company.profileCount}</span>
+              <span className="text-gray-500 dark:text-gray-400">Perfis:</span>
+              <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">{company.profileCount}</span>
             </div>
           </div>
         </div>
       )}
 
       {/* Botões de ação */}
-      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+      <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
           disabled={loading}
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
           disabled={loading}
         >
           {loading ? "Salvando..." : company ? "Atualizar" : "Criar"} Empresa

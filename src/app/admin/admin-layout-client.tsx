@@ -110,7 +110,7 @@ export default function AdminLayoutClient({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Overlay para mobile */}
       {sidebarOpen && (
         <div
@@ -121,7 +121,7 @@ export default function AdminLayoutClient({
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 shadow-lg transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
           sidebarCollapsed ? "w-16" : "w-64"
         } ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -129,23 +129,23 @@ export default function AdminLayoutClient({
       >
         <div className="flex flex-col h-full">
           {/* Header do sidebar */}
-          <div className={`flex items-center justify-between h-16 border-b border-gray-200 ${sidebarCollapsed ? 'px-2' : 'px-6'}`}>
+          <div className={`flex items-center justify-between h-16 border-b border-gray-200 dark:border-gray-700 ${sidebarCollapsed ? 'px-2' : 'px-6'}`}>
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 flex items-center justify-center">
                 <img
-                  src="/Logo DataBi - Colorido fundo claro.svg"
+                  src="/Logo DataBi - Branco.svg"
                   alt="DataBi Logo"
                   className="w-8 h-8"
                 />
               </div>
-              {!sidebarCollapsed && <h1 className="text-lg font-bold text-gray-900">DataBi Admin</h1>}
+              {!sidebarCollapsed && <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">DataBi Admin</h1>}
             </div>
 
             <div className="flex items-center space-x-1">
               {/* Botão de colapsar (desktop) */}
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="hidden lg:block p-1 text-gray-400 hover:text-gray-600"
+                className="hidden lg:block p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                 title={sidebarCollapsed ? "Expandir menu" : "Colapsar menu"}
               >
                 <svg
@@ -166,7 +166,7 @@ export default function AdminLayoutClient({
               {/* Botão de fechar (mobile) */}
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="lg:hidden p-1 text-gray-400 hover:text-gray-600"
+                className="lg:hidden p-1 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 <svg
                   className="w-5 h-5"
@@ -186,20 +186,20 @@ export default function AdminLayoutClient({
           </div>
 
           {/* Informações do usuário */}
-          <div className={`py-4 border-b border-gray-200 ${sidebarCollapsed ? 'px-2' : 'px-6'}`}>
+          <div className={`py-4 border-b border-gray-200 dark:border-gray-700 ${sidebarCollapsed ? 'px-2' : 'px-6'}`}>
             <div className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'space-x-3'}`}>
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {user.name.charAt(0).toUpperCase()}
                 </span>
               </div>
               {!sidebarCollapsed && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {user.name}
                   </p>
                   {user.profile && (
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {user.profile.name}
                     </p>
                   )}
@@ -208,7 +208,7 @@ export default function AdminLayoutClient({
             </div>
             {!sidebarCollapsed && user.company && (
               <div className="mt-2">
-                <p className="text-xs text-gray-500">{user.company.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{user.company.name}</p>
               </div>
             )}
           </div>
@@ -219,7 +219,7 @@ export default function AdminLayoutClient({
             {companyDashboards.length > 0 && (
               <div>
                 {!sidebarCollapsed && (
-                  <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  <p className="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
                     Dashboards
                   </p>
                 )}
@@ -227,15 +227,15 @@ export default function AdminLayoutClient({
                   {companyDashboards.map((dashboard) => (
                     <Link
                       key={dashboard.id}
-                      href={`/dashboard/${dashboard.id}`}
+                      href={`/admin/dashboard/${dashboard.id}`}
                       className={`flex items-center transition-colors group ${
                         sidebarCollapsed 
                           ? 'justify-center p-2 rounded-md' 
                           : 'space-x-3 px-3 py-2 rounded-md'
                       } ${
-                        pathname === `/dashboard/${dashboard.id}`
-                          ? "bg-blue-100 text-blue-700"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                        pathname === `/admin/dashboard/${dashboard.id}`
+                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-700"
                       }`}
                       title={sidebarCollapsed ? dashboard.name : undefined}
                     >
@@ -276,9 +276,9 @@ export default function AdminLayoutClient({
               </div>
             )}
 
-            <div className="border-t border-gray-200 pt-2 mt-2">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2">
               {!sidebarCollapsed && (
-                <p className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <p className="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
                   Administração
                 </p>
               )}
@@ -293,8 +293,8 @@ export default function AdminLayoutClient({
                       : 'space-x-3 px-3 py-2 rounded-md'
                   } ${
                     isActiveRoute(item.href)
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                      ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-gray-100 dark:hover:bg-gray-700"
                   }`}
                   title={sidebarCollapsed ? item.name : undefined}
                 >
@@ -318,10 +318,10 @@ export default function AdminLayoutClient({
           </nav>
 
           {/* Footer do sidebar */}
-          <div className={`border-t border-gray-200 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
+          <div className={`border-t border-gray-200 dark:border-gray-700 ${sidebarCollapsed ? 'p-2' : 'p-4'}`}>
             <button
               onClick={handleLogout}
-              className={`flex items-center w-full text-red-600 rounded-md hover:bg-red-50 transition-colors ${
+              className={`flex items-center w-full text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900 transition-colors ${
                 sidebarCollapsed 
                   ? 'justify-center p-2' 
                   : 'space-x-3 px-3 py-2'
@@ -350,11 +350,11 @@ export default function AdminLayoutClient({
       {/* Conteúdo principal */}
       <div className="flex-1 lg:ml-0">
         {/* Header mobile */}
-        <div className="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
+        <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3">
           <div className="flex items-center justify-between">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 text-gray-400 hover:text-gray-600"
+              className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
             >
               <svg
                 className="w-6 h-6"
@@ -370,7 +370,7 @@ export default function AdminLayoutClient({
                 />
               </svg>
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Administração
             </h1>
             <div className="w-10"></div>
@@ -378,7 +378,7 @@ export default function AdminLayoutClient({
         </div>
 
         {/* Conteúdo */}
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 h-screen overflow-hidden">{children}</main>
       </div>
     </div>
   );

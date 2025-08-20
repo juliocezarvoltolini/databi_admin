@@ -81,7 +81,7 @@ export default function UserList({
     <div className="card">
       <div className="card-header">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
             Lista de Usuários ({filteredUsers.length})
           </h3>
 
@@ -97,7 +97,7 @@ export default function UserList({
                 className="input-field pl-10 min-w-64"
               />
               <svg
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -143,7 +143,7 @@ export default function UserList({
       {filteredUsers.length === 0 ? (
         <div className="text-center py-12">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400"
+            className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -155,10 +155,10 @@ export default function UserList({
               d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m9 5.197v1M13 7a4 4 0 11-8 0 4 4 0 018 0z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
             Nenhum usuário encontrado
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {searchTerm || filterProfile || filterStatus
               ? "Tente ajustar os filtros de busca."
               : "Comece criando um novo usuário."}
@@ -168,37 +168,37 @@ export default function UserList({
         <div className="overflow-hidden">
           {/* Versão desktop - tabela */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-800">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Usuário
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Perfil
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Criado em
                   </th>
                   {(permission.canEdit || permission.canDelete) && (
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Ações
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {user.name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
                           {user.email}
                         </div>
                       </div>
@@ -206,15 +206,15 @@ export default function UserList({
                     <td className="px-6 py-4 whitespace-nowrap">
                       {user.profile ? (
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {user.profile.name}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {user.profile.description}
                           </div>
                         </div>
                       ) : (
-                        <span className="text-sm text-gray-400">
+                        <span className="text-sm text-gray-400 dark:text-gray-500">
                           Sem perfil
                         </span>
                       )}
@@ -223,14 +223,14 @@ export default function UserList({
                       <span
                         className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                           user.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
+                            ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                            : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                         }`}
                       >
                         {user.isActive ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {formatDate(user.createdAt)}
                     </td>
                     {(permission.canEdit || permission.canDelete) && (
@@ -239,7 +239,7 @@ export default function UserList({
                           {permission.canEdit && (
                             <button
                               onClick={() => onEdit(user)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                               Editar
                             </button>
@@ -247,7 +247,7 @@ export default function UserList({
                           {permission.canDelete && user.isActive && (
                             <button
                               onClick={() => onDelete(user.id)}
-                              className="text-red-600 hover:text-red-900"
+                              className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
                             >
                               Desativar
                             </button>
@@ -266,30 +266,30 @@ export default function UserList({
             {filteredUsers.map((user) => (
               <div
                 key={user.id}
-                className="border border-gray-200 rounded-lg p-4"
+                className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-900">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {user.name}
                     </h4>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
 
                     <div className="mt-2 space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">Perfil:</span>
-                        <span className="text-xs text-gray-900">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Perfil:</span>
+                        <span className="text-xs text-gray-900 dark:text-gray-100">
                           {user.profile?.name || "Sem perfil"}
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">Status:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Status:</span>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                             user.isActive
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                              : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                           }`}
                         >
                           {user.isActive ? "Ativo" : "Inativo"}
@@ -297,10 +297,10 @@ export default function UserList({
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           Criado em:
                         </span>
-                        <span className="text-xs text-gray-900">
+                        <span className="text-xs text-gray-900 dark:text-gray-100">
                           {formatDate(user.createdAt)}
                         </span>
                       </div>
@@ -312,7 +312,7 @@ export default function UserList({
                       {permission.canEdit && (
                         <button
                           onClick={() => onEdit(user)}
-                          className="text-blue-600 hover:text-blue-900 text-sm"
+                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
                         >
                           Editar
                         </button>
@@ -320,7 +320,7 @@ export default function UserList({
                       {permission.canDelete && user.isActive && (
                         <button
                           onClick={() => onDelete(user.id)}
-                          className="text-red-600 hover:text-red-900 text-sm"
+                          className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm"
                         >
                           Desativar
                         </button>

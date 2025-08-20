@@ -46,22 +46,23 @@ export default function DashboardViewer({ dashboard }: Props) {
   
   if (fullscreen) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-900">
+      <div className="fixed inset-0 z-50 bg-gray-900 dark:bg-black">
         {/* Header ultra-minimalista para fullscreen */}
-        <div className="bg-white shadow-sm">
+        <div className="bg-white dark:bg-gray-800 shadow-sm">
           <div className="px-3 py-1.5">
             <div className="flex justify-between items-center">
-              <h1 className="text-base font-semibold text-gray-900 truncate">
+              <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
                 {dashboard.name}
               </h1>
               <div className="flex items-center space-x-2 flex-shrink-0">
                 <div className="flex items-center space-x-1.5">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                  <span className="text-xs text-gray-600 hidden sm:inline">Online</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">Online</span>
                 </div>
+                
                 <button
                   onClick={toggleFullscreen}
-                  className="text-gray-600 hover:text-gray-800 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                  className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                   title="Sair da tela cheia"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,16 +78,13 @@ export default function DashboardViewer({ dashboard }: Props) {
         <div className="h-[calc(100vh-3rem)] overflow-hidden">
           <iframe
             src={dashboard.powerbiUrl}
-            className="w-full h-full border-none"
+            className="border-none"
             title={`Dashboard: ${dashboard.name}`}
             allowFullScreen
             style={{ 
-              transform: 'scale(1.05)', 
-              transformOrigin: 'top left',
-              margin: '-20px -15px',
-              width: 'calc(100% + 30px)',
-              height: 'calc(100% + 40px)',
-              minHeight: '100%'
+              width: '100vw',
+              height: 'calc(100vh - 3rem + 60px)',
+              border: 'none'
             }}
           />
         </div>
@@ -95,28 +93,28 @@ export default function DashboardViewer({ dashboard }: Props) {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="admin-dashboard-container">
       {/* Header do dashboard - altura mínima otimizada */}
-      <div className="bg-white border-b border-gray-200 px-2 py-1.5 flex-shrink-0">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-2 py-1.5 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3 min-w-0">
-            <h1 className="text-base font-semibold text-gray-900 truncate">
+            <h1 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
               {dashboard.name}
             </h1>
             {dashboard.description && (
-              <p className="text-xs text-gray-500 truncate hidden sm:block">{dashboard.description}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate hidden sm:block">{dashboard.description}</p>
             )}
           </div>
 
           <div className="flex items-center space-x-3 flex-shrink-0">
             <div className="flex items-center space-x-1.5">
               <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-gray-600 hidden sm:inline">Online</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">Online</span>
             </div>
             
             <button
               onClick={toggleFullscreen}
-              className="text-gray-600 hover:text-gray-800 p-1 rounded-md hover:bg-gray-100 transition-colors"
+              className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               title="Tela cheia"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,19 +126,16 @@ export default function DashboardViewer({ dashboard }: Props) {
       </div>
 
       {/* Dashboard Content - maximizar espaço */}
-      <div className="bg-white flex-1 overflow-hidden">
+      <div className="admin-dashboard-content bg-white dark:bg-gray-800 overflow-hidden">
         <iframe
           src={dashboard.powerbiUrl}
-          className="w-full h-full border-none"
+          className="powerbi-iframe border-none"
           title={`Dashboard: ${dashboard.name}`}
           allowFullScreen
           style={{ 
-            transform: 'scale(1.03)', 
-            transformOrigin: 'top left',
-            margin: '-15px -10px',
-            width: 'calc(100% + 20px)',
-            height: 'calc(100% + 30px)',
-            minHeight: '100%'
+            width: '100%',
+            height: 'calc(100% + 60px)',
+            border: 'none'
           }}
         />
       </div>

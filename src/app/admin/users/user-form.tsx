@@ -312,16 +312,16 @@ export default function UserForm({
 
       {/* Informações do perfil selecionado */}
       {selectedProfile && (
-        <div className="card bg-blue-50 border-blue-200">
-          <h4 className="font-medium text-blue-900 mb-2">
+        <div className="card bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+          <h4 className="font-medium text-blue-900 dark:text-blue-200 mb-2">
             Perfil: {selectedProfile.name}
           </h4>
-          <p className="text-sm text-blue-700 mb-3">
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
             {selectedProfile.description}
           </p>
 
           <div className="space-y-2">
-            <p className="text-sm font-medium text-blue-900">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
               Permissões incluídas:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -331,7 +331,7 @@ export default function UserForm({
                   className="flex items-center space-x-2"
                 >
                   <svg
-                    className="w-4 h-4 text-green-600"
+                    className="w-4 h-4 text-green-600 dark:text-green-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -343,7 +343,7 @@ export default function UserForm({
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <span className="text-sm text-blue-700">
+                  <span className="text-sm text-blue-700 dark:text-blue-300">
                     {permission.description}
                   </span>
                 </div>
@@ -354,7 +354,7 @@ export default function UserForm({
       )}
 
       {/* Ações */}
-      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+      <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
           type="button"
           onClick={onCancel}

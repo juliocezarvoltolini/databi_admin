@@ -71,8 +71,53 @@ export async function canAccessDashboard(
     return false;
   }
 
-  // Verificar se tem permissão VIEW_DASHBOARD
-  return await hasPermission(userId, "VIEW_DASHBOARD");
+  try {
+    // Buscar usuário com perfil e empresa
+    const user = await prisma.user.findUnique({
+      where: { id: userId, isActive: true },
+      include: {
+        profile: {
+          include: {
+            company: true,
+            permissions: {
+              include: {
+                permission: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user || !user.profile) {
+      return false;
+    }
+
+    // Verificar se tem permissão para visualizar dashboards
+    const hasViewPermission = user.profile.permissions.some((pp) =>
+      pp.permission.name === "VIEW_DASHBOARD"
+    );
+
+    if (!hasViewPermission) {
+      return false;
+    }
+
+    // Buscar o dashboard
+    const dashboard = await prisma.dashboard.findUnique({
+      where: { id: dashboardId, isActive: true },
+      select: { companyId: true },
+    });
+
+    if (!dashboard) {
+      return false;
+    }
+
+    // Verificar se o dashboard pertence à empresa do perfil
+    return dashboard.companyId === user.profile.companyId;
+  } catch (error) {
+    console.error("Erro ao verificar acesso ao dashboard:", error);
+    return false;
+  }
 }
 
 /**

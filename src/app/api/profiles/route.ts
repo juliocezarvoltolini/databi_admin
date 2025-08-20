@@ -35,17 +35,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar perfis que estão associados à empresa do usuário
+    // Buscar usuário com perfil para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
+    // Buscar perfis da empresa do perfil do usuário
     const whereClauses: any = {
       isActive: true,
     };
 
-    if (user.companyId) {
-      whereClauses.companies = {
-        some: {
-            companyId: user.companyId,
-          },
-      }
+    if (userWithProfile.profile.companyId) {
+      whereClauses.companyId = userWithProfile.profile.companyId;
     }
 
     const profiles = await prisma.profile.findMany({
@@ -66,24 +75,21 @@ export async function GET(request: NextRequest) {
             permission: true,
           },
         },
-        companies: {
-          include: {
-            company: {
-              select: {
-                id: true,
-                name: true,
-                slug: true,
-              },
-            },
+        company: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
           },
         },
+      
       },
       orderBy: {
         name: "asc",
       },
     });
 
-    // Transformar dados para incluir contadores, permissões e empresas
+    // Transformar dados para incluir contadores, permissões e empresa
     const profilesWithStats = profiles.map((profile) => ({
       id: profile.id,
       name: profile.name,
@@ -92,7 +98,7 @@ export async function GET(request: NextRequest) {
       createdAt: profile.createdAt,
       userCount: profile._count.users,
       permissions: profile.permissions.map((pp) => pp.permission),
-      companies: profile.companies.map((pc) => pc.company),
+      company: profile.company,
     }));
 
     return NextResponse.json({
@@ -136,6 +142,19 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    if (user.companyId && !body.companyId) {
+      body.companyId = user.companyId;
+    }
+
+    if (user.companyId && body.companyId !== user.companyId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Não é possível criar perfil para outra empresa",
+        } as ApiResponse,
+        { status: 403 }
+      );
+    }
     // Validar dados
     const validation = validateData(createProfileSchema, body);
     if (!validation.success) {
@@ -149,17 +168,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Buscar usuário com perfil para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
     const {
       name,
       description,
       permissions,
-      companyIds = [user.companyId!],
+      companyId
     } = validation.data!;
 
-    // Verificar se já existe perfil com esse nome globalmente
+    // Verificar se já existe perfil com esse nome na mesma empresa
     const existingProfile = await prisma.profile.findFirst({
       where: {
         name,
+        companyId,
       },
     });
 
@@ -167,25 +200,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Já existe um perfil com este nome",
+          error: "Já existe um perfil com este nome nesta empresa",
         } as ApiResponse,
         { status: 400 }
       );
     }
 
-    // Verificar se todas as empresas existem e o usuário tem acesso
-    const validCompanies = await prisma.company.findMany({
+    // Verificar se a empresa existe
+    const validCompany = await prisma.company.findFirst({
       where: {
-        id: { in: companyIds },
+        id: companyId,
         isActive: true,
       },
     });
 
-    if (validCompanies.length !== companyIds.length) {
+    if (!validCompany) {
       return NextResponse.json(
         {
           success: false,
-          error: "Uma ou mais empresas são inválidas",
+          error: "Empresa inválida",
         } as ApiResponse,
         { status: 400 }
       );
@@ -208,22 +241,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Criar perfil, suas permissões e associações com empresas em uma transação
+    // Criar perfil e suas permissões em uma transação
     const newProfile = await prisma.$transaction(async (tx) => {
       // Criar o perfil
       const profile = await tx.profile.create({
         data: {
           name,
           description: description || null,
-        },
-      });
-
-      // Criar as associações com empresas
-      await tx.profileCompany.createMany({
-        data: companyIds.map((companyId: string) => ({
-          profileId: profile.id,
           companyId,
-        })),
+        },
       });
 
       // Criar as permissões do perfil
@@ -236,7 +262,7 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Retornar perfil com permissões e empresas
+      // Retornar perfil com permissões e empresa
       return await tx.profile.findUnique({
         where: { id: profile.id },
         include: {
@@ -245,15 +271,11 @@ export async function POST(request: NextRequest) {
               permission: true,
             },
           },
-          companies: {
-            include: {
-              company: {
-                select: {
-                  id: true,
-                  name: true,
-                  slug: true,
-                },
-              },
+          company: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
             },
           },
         },
@@ -271,7 +293,7 @@ export async function POST(request: NextRequest) {
         createdAt: newProfile!.createdAt,
         userCount: 0,
         permissions: newProfile!.permissions.map((pp) => pp.permission),
-        companies: newProfile!.companies.map((pc) => pc.company),
+        company: newProfile!.company,
       },
     } as ApiResponse);
   } catch (error) {

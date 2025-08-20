@@ -130,21 +130,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    //Se não tem companyId então o usuário é um administrador do sistema.
-    if (!user.companyId && companyId) {
-      const exixteRelacao = await prisma.profileCompany.findFirst({
-        where: {
-          companyId: companyId,
-          profileId: profileId,
-        },
-      });
+    // //Se não tem companyId então o usuário é um administrador do sistema.
+    // if (!user.companyId && companyId) {
+    //   const exixteRelacao = await prisma.profileCompany.findFirst({
+    //     where: {
+    //       companyId: companyId,
+    //       profileId: profileId,
+    //     },
+    //   });
 
-      if (!exixteRelacao) {
-        const relacaoCriada = await prisma.profileCompany.create({
-          data: { companyId: companyId, profileId: profileId },
-        });
-      }
-    }
+    //   if (!exixteRelacao) {
+    //     const relacaoCriada = await prisma.profileCompany.create({
+    //       data: { companyId: companyId, profileId: profileId },
+    //     });
+    //   }
+    // }
 
     // Determinar a empresa do novo usuário
     // Se companyId for fornecido explicitamente (incluindo null), usar ele
@@ -160,11 +160,7 @@ export async function POST(request: NextRequest) {
 
     // Se o usuário está sendo criado para uma empresa específica, verificar se o perfil está associado a ela
     if (targetCompanyId) {
-      profileWhere.companies = {
-        some: {
-          companyId: targetCompanyId,
-        },
-      };
+      profileWhere.companyId = targetCompanyId
     }
 
     const profile = await prisma.profile.findFirst({
@@ -195,11 +191,7 @@ export async function POST(request: NextRequest) {
                 permission: true,
               },
             },
-            companies: {
-              include: {
-                company: true,
-              },
-            },
+            company: {},
           },
         },
       },
@@ -224,11 +216,7 @@ export async function POST(request: NextRequest) {
             permission: true,
           },
         },
-        companies: {
-          include: {
-            company: true,
-          },
-        },
+        company: {},
       },
     });
 

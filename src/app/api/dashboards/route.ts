@@ -28,10 +28,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar dashboards da empresa (ou todos se for administrador do sistema)
-    const whereClause = user.companyId 
-      ? { companyId: user.companyId, isActive: true }
+    // Buscar usuário com perfil para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
+    // Buscar dashboards da empresa do perfil (ou todos se for administrador do sistema)
+    const whereClause = userWithProfile.profile.companyId 
+      ? { companyId: userWithProfile.profile.companyId, isActive: true }
       : { isActive: true };
+
+
+          console.log("Where clause for dashboard:", whereClause); // Debugging line
     
     const dashboards = await prisma.dashboard.findMany({
       where: whereClause,
@@ -108,10 +124,23 @@ export async function POST(request: NextRequest) {
 
     const { name, description, powerbiUrl, companyId } = validation.data!;
     
+    // Buscar perfil do usuário para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
     // Determinar a empresa do dashboard
     // Se companyId for fornecido explicitamente, usar ele
-    // Se não for fornecido, usar a empresa do usuário atual
-    const targetCompanyId = companyId || user.companyId;
+    // Se não for fornecido, usar a empresa do perfil do usuário
+    const targetCompanyId = companyId || userWithProfile.profile.companyId;
 
     // Verificar se já existe dashboard com esse nome na empresa
     const existingDashboard = await prisma.dashboard.findFirst({

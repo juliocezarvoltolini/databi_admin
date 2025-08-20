@@ -1,42 +1,18 @@
 // src/app/admin/profiles/profile-list.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { PermissionVerbs, ProfileClient } from "../layout";
 
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface Company {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Profile {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
+interface ProfileWithUserCount extends ProfileClient {
   userCount: number;
-  permissions: Permission[];
-  companies: Company[];
 }
 
-interface Permissions {
-  canCreate: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-}
 
 interface Props {
-  profiles: Profile[];
-  permissions: Permissions;
-  onEdit: (profile: Profile) => void;
+  profiles: ProfileWithUserCount[];
+  permissions: PermissionVerbs;
+  onEdit: (profile: ProfileClient) => void;
   onDelete: (profileId: string) => void;
 }
 
@@ -56,7 +32,7 @@ export default function ProfileList({
       profile.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -70,12 +46,17 @@ export default function ProfileList({
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      DASHBOARD: "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200",
+      DASHBOARD:
+        "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200",
       USER: "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200",
-      PROFILE: "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200",
+      PROFILE:
+        "bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200",
       SYSTEM: "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200",
     };
-    return colors[category] || "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200";
+    return (
+      colors[category] ||
+      "bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+    );
   };
 
   const getCategoryName = (category: string) => {
@@ -188,23 +169,24 @@ export default function ProfileList({
                         </svg>
                         {profile.userCount} usuário(s)
                       </span>
-
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
-                        <svg
-                          className="w-3 h-3 mr-1"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                          />
-                        </svg>
-                        {profile.companies.length} empresa(s)
-                      </span>
+                      {profile.company && (
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                          <svg
+                            className="w-3 h-3 mr-1"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                            />
+                          </svg>
+                          empresa {profile.company.name}
+                        </span>
+                      )}
                     </div>
 
                     {profile.description && (
@@ -297,42 +279,40 @@ export default function ProfileList({
                     <h5 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
                       Empresas associadas:
                     </h5>
-                    {profile.companies.length === 0 ? (
+                    {!profile.company ? (
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Nenhuma empresa associada
                       </p>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {profile.companies.map((company) => (
-                          <div
-                            key={company.id}
-                            className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md"
-                          >
-                            <div className="p-1 bg-purple-100 rounded">
-                              <svg
-                                className="w-4 h-4 text-purple-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                                />
-                              </svg>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900">
-                                {company.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {company.slug}
-                              </p>
-                            </div>
+                        <div
+                          key={profile.company.id}
+                          className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md"
+                        >
+                          <div className="p-1 bg-purple-100 rounded">
+                            <svg
+                              className="w-4 h-4 text-purple-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                              />
+                            </svg>
                           </div>
-                        ))}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">
+                              {profile.company.name}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {profile.company.slug}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -343,36 +323,36 @@ export default function ProfileList({
                       Permissões deste perfil:
                     </h5>
 
-                  {profile.permissions.length === 0 ? (
-                    <p className="text-sm text-gray-500">
-                      Nenhuma permissão atribuída
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {profile.permissions.map((permission) => (
-                        <div
-                          key={permission.id}
-                          className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md"
-                        >
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(
-                              permission.category
-                            )}`}
+                    {profile.permissions.length === 0 ? (
+                      <p className="text-sm text-gray-500">
+                        Nenhuma permissão atribuída
+                      </p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {profile.permissions.map((permission) => (
+                          <div
+                            key={permission.id}
+                            className="flex items-center space-x-3 p-2 border border-gray-100 rounded-md"
                           >
-                            {getCategoryName(permission.category)}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">
-                              {permission.description}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {permission.name}
-                            </p>
+                            <span
+                              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getCategoryColor(
+                                permission.category
+                              )}`}
+                            >
+                              {getCategoryName(permission.category)}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900">
+                                {permission.description}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {permission.name}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

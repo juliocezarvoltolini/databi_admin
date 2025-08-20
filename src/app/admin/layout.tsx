@@ -5,6 +5,34 @@ import { verifyToken, getCurrentUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import AdminLayoutClient from "./admin-layout-client";
+import { Company, Dashboard, Permission, Profile, User } from "@/generated/prisma";
+import { DeepPartial } from "react-hook-form";
+export interface DashboardClient extends DeepPartial<Dashboard> {}
+export interface PermissionClient extends DeepPartial<Permission> {}
+export interface CompanyClient extends DeepPartial<Company> {
+   dashboards?: DashboardClient[];
+}
+
+export interface ProfileClient extends DeepPartial<Profile>{
+  company: CompanyClient;
+  dashboards: DashboardClient[];
+  permissions: PermissionClient[];
+} 
+
+export interface UserClient extends User {
+company: CompanyClient;
+profile: ProfileClient
+}
+
+export interface PermissionsEnum {
+  [key: string]: boolean // permite qualquer propriedade
+}
+
+export interface PermissionVerbs {
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+}
 
 export default async function AdminLayout({
   children,
@@ -26,6 +54,7 @@ export default async function AdminLayout({
 
   // Buscar dados do usuário
   const user = await getCurrentUser(session.userId);
+
   if (!user) {
     redirect("/login");
   }
@@ -66,11 +95,6 @@ export default async function AdminLayout({
 
   const companyDashboards = await prisma.dashboard.findMany({
     where: whereClaude,
-    select: {
-      id: true,
-      name: true,
-      powerbiUrl: true,
-    },
     orderBy: {
       name: "asc",
     },
@@ -78,13 +102,7 @@ export default async function AdminLayout({
 
   return (
     <AdminLayoutClient
-      user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        company: user.company,
-        profile: user.profile,
-      }}
+      user={user}
       permissions={{
         canViewUsers,
         canViewProfiles,

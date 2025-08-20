@@ -45,12 +45,7 @@ export default async function ProfilesPage() {
 
   return (
     <ProfilesClient
-      user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        company: user.company,
-      }}
+      user={user}
       permissions={{
         canCreate: canCreateProfiles,
         canEdit: canEditProfiles,

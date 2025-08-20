@@ -1,9 +1,16 @@
 // src/app/api/companies/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createCompanySchema, validateData, type ApiResponse } from "@/lib/types";
+import {
+  createCompanySchema,
+  validateData,
+  type ApiResponse,
+} from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";
-import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
+import {
+  authenticateApiRequest,
+  createAuthErrorResponse,
+} from "@/lib/api-auth";
 
 // GET - Listar empresas
 export async function GET(request: NextRequest) {
@@ -40,16 +47,15 @@ export async function GET(request: NextRequest) {
         logo: true,
         isActive: true,
         createdAt: true,
+        dashboards: true,
         _count: {
           select: {
             users: { where: { isActive: true } },
             dashboards: { where: { isActive: true } },
-            profiles: { 
-              where: { 
-                profile: { 
-                  isActive: true 
-                } 
-              } 
+            profiles: {
+              where: {
+                isActive: true,
+              },
             },
           },
         },
@@ -97,7 +103,10 @@ export async function POST(request: NextRequest) {
     const { user } = authResult;
 
     // Verificar permissão para criar empresas
-    const canCreateCompanies = await hasPermission(user.userId, "CREATE_COMPANIES");
+    const canCreateCompanies = await hasPermission(
+      user.userId,
+      "CREATE_COMPANIES"
+    );
     if (!canCreateCompanies) {
       return NextResponse.json(
         {

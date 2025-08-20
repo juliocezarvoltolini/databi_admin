@@ -2,9 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { createCompanySchema, validateData, type ApiResponse } from "@/lib/types";
+import {
+  createCompanySchema,
+  validateData,
+  type ApiResponse,
+} from "@/lib/types";
 import { hasPermission } from "@/lib/permissions";
-import { authenticateApiRequest, createAuthErrorResponse } from "@/lib/api-auth";
+import {
+  authenticateApiRequest,
+  createAuthErrorResponse,
+} from "@/lib/api-auth";
 
 // GET - Buscar empresa específica
 export async function GET(
@@ -22,7 +29,9 @@ export async function GET(
     const resolvedParams = await params;
 
     // Verificar permissão
-    const canViewCompanies = await hasPermission(user.userId, "VIEW_COMPANIES");
+    const canViewCompanies =
+      (await hasPermission(user.userId, "VIEW_COMPANIES")) ||
+      user.companyId === resolvedParams.id;
     if (!canViewCompanies) {
       return NextResponse.json(
         {
@@ -39,17 +48,12 @@ export async function GET(
         isActive: true,
       },
       include: {
+        dashboards: true,
         _count: {
           select: {
             users: { where: { isActive: true } },
             dashboards: { where: { isActive: true } },
-            profiles: { 
-              where: { 
-                profile: { 
-                  isActive: true 
-                } 
-              } 
-            },
+            profiles: true,
           },
         },
       },

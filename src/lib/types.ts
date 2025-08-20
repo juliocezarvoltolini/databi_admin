@@ -61,12 +61,16 @@ export const createProfileSchema = z.object({
   name: z.string().min(2, "Nome do perfil deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   permissions: z.array(z.string()).optional(),
-  companyIds: z.array(z.string().cuid()).optional(), // IDs das empresas associadas
+  companyId: z.string().cuid().optional(), // ID da empresa (obrigatório)
 });
 
-// Schema para atualizar relação perfil-empresa
-export const updateProfileCompaniesSchema = z.object({
-  companyIds: z.array(z.string().cuid()),
+// Schema para atualizar perfil
+export const updateProfileSchema = z.object({
+  name: z.string().min(2, "Nome do perfil deve ter pelo menos 2 caracteres").optional(),
+  description: z.string().optional(),
+  companyId: z.string().cuid().optional(), // ID da empresa
+  isActive: z.boolean().optional(),
+  dashboards: z.array(z.string()).optional(),
 });
 
 // Tipos derivados dos schemas
@@ -76,7 +80,7 @@ export type CreateUserData = z.infer<typeof createUserSchema>;
 export type CreateCompanyData = z.infer<typeof createCompanySchema>;
 export type CreateDashboardData = z.infer<typeof createDashboardSchema>;
 export type CreateProfileData = z.infer<typeof createProfileSchema>;
-export type UpdateProfileCompaniesData = z.infer<typeof updateProfileCompaniesSchema>;
+export type UpdateProfileData = z.infer<typeof updateProfileSchema>;
 
 // Tipos para resposta da API
 export interface ApiResponse<T = unknown> {

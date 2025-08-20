@@ -1,76 +1,70 @@
-// src/app/admin/profiles/profiles-client.tsx
 "use client";
+// src/app/admin/profiles/profiles-client.tsx
 
 import { useState, useEffect } from "react";
 import ProfileForm from "./profile.form";
 import ProfileList from "./profile-list";
-import { Company } from "@/generated/prisma";
-import { 
-  AdminLayout, 
-  PageHeader, 
-  StatsCard, 
-  AdminCard, 
-  AdminButton, 
+import {
+  Company,
+  Dashboard,
+  Permission,
+  PrismaClient,
+  Profile,
+  User,
+} from "@/generated/prisma";
+import {
+  AdminLayout,
+  PageHeader,
+  StatsCard,
+  AdminCard,
+  AdminButton,
   LoadingSpinner,
   ProfilesIcon,
   CheckCircleIcon,
   UsersIcon,
-  PlusIcon
+  PlusIcon,
 } from "@/components/admin";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  company: Company;
-}
-
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface Profile {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
-  userCount: number;
-  permissions: Permission[];
-  companies: Company[];
-}
-
-interface Permissions {
-  canCreate: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-}
+import {
+  CompanyClient,
+  DashboardClient,
+  PermissionClient,
+  PermissionVerbs,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 
 interface Props {
-  user: User;
-  permissions: Permissions;
+  user: UserClient;
+  permissions: PermissionVerbs;
+}
+
+interface ProfileWithUserCount extends ProfileClient {
+  userCount: number;
 }
 
 export default function ProfilesClient({ user, permissions }: Props) {
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
-  const [allCompanies, setAllCompanies] = useState<Company[]>([]);
+  const [profiles, setProfiles] = useState<ProfileWithUserCount[]>([]);
+  const [allPermissions, setAllPermissions] = useState<PermissionClient[]>([]);
+  const [allCompanies, setAllCompanies] = useState<CompanyClient[]>([]);
+  const [allDashboards, setAllDashboards] = useState<DashboardClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [editingProfile, setEditingProfile] = useState<ProfileClient | null>(
+    null
+  );
   const [error, setError] = useState("");
 
   // Carregar dados iniciais
   useEffect(() => {
     loadData();
   }, []);
-
   const loadData = async () => {
     setLoading(true);
     try {
+      // Variável local para armazenar companies
+      let companiesData: CompanyClient[] = [];
+
       // Carregar perfis
       const profilesResponse = await fetch("/api/profiles");
       if (profilesResponse.ok) {
@@ -89,12 +83,48 @@ export default function ProfilesClient({ user, permissions }: Props) {
         }
       }
 
-      // Carregar todas as empresas disponíveis
-      const companiesResponse = await fetch("/api/companies");
-      if (companiesResponse.ok) {
-        const companiesResult = await companiesResponse.json();
-        if (companiesResult.success) {
-          setAllCompanies(companiesResult.data);
+      // Carregar empresas
+      if (user.profile.company) {
+        const companyResponse = await fetch(
+          `/api/companies/${user.profile.company.id}`
+        );
+
+        if (companyResponse.ok) {
+          const companyResult = await companyResponse.json();
+    
+          if (companyResult.success) {
+            companiesData = [companyResult.data]; // Use variável local
+            setAllCompanies(companiesData);
+          }
+        }
+      } else {
+        const companiesResponse = await fetch("/api/companies");
+        if (companiesResponse.ok) {
+          const companiesResult = await companiesResponse.json();
+          if (companiesResult.success) {
+     
+            companiesData = companiesResult.data; // Use variável local
+            setAllCompanies(companiesData);
+          }
+        }
+      }
+
+      // Carregar dashboards
+      const dashboardsResponse = await fetch("/api/dashboards");
+
+
+      if (dashboardsResponse.ok) {
+        const dashboardsResult = await dashboardsResponse.json();
+        if (dashboardsResult.success) {
+          setAllDashboards(dashboardsResult.data);
+        }
+      } else {
+        // Agora use a variável local em vez do estado
+        if (!user.profile.dashboards || user.profile.dashboards.length === 0) {
+   
+          if (companiesData.length > 0) {
+            setAllDashboards(companiesData[0].dashboards || []);
+          }
         }
       }
     } catch (error) {
@@ -104,14 +134,26 @@ export default function ProfilesClient({ user, permissions }: Props) {
       setLoading(false);
     }
   };
-
   const handleCreateProfile = () => {
     setEditingProfile(null);
     setShowForm(true);
   };
 
-  const handleEditProfile = (profile: Profile) => {
-    setEditingProfile(profile);
+  const handleEditProfile = async (profile: ProfileClient) => {
+    const response = await fetch(`/api/profiles/${profile.id}`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      setError("Erro ao carregar perfil para edição");
+      return;
+    }
+
+    const data = await response.json();
+    const profileData: ProfileClient = { ...data.data };
+    console.log("Perfil carregado para edição:", data);
+
+    setEditingProfile(profileData);
     setShowForm(true);
   };
 
@@ -172,7 +214,10 @@ export default function ProfilesClient({ user, permissions }: Props) {
       />
 
       {error && (
-        <AdminCard variant="elevated" className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+        <AdminCard
+          variant="elevated"
+          className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+        >
           <div className="text-red-800 dark:text-red-200">{error}</div>
         </AdminCard>
       )}
@@ -183,14 +228,10 @@ export default function ProfilesClient({ user, permissions }: Props) {
           variant="elevated"
         >
           <ProfileForm
-            user={{
-              id: user.id,
-              company: user.company,
-              email: user.email,
-              name: user.name,
-            }}
+            user={user}
             profile={editingProfile}
             allPermissions={allPermissions}
+            allDashboards={allDashboards}
             allCompanies={allCompanies}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}

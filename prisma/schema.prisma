@@ -27,7 +27,7 @@ model Company {
   // Relacionamentos
   users      User[]
   dashboards Dashboard[]
-  profiles   ProfileCompany[] // Relação many-to-many com perfis
+  profiles   Profile[] // Relação one-to-many com perfis
 
   @@map("companies")
 }
@@ -56,7 +56,7 @@ model User {
   @@map("users")
 }
 
-// Perfis/Roles que podem estar em múltiplas empresas
+// Perfis/Roles vinculados a uma única empresa
 model Profile {
   id          String   @id @default(cuid())
   name        String // Ex: "Admin", "Visualizador", "Gerente"
@@ -65,28 +65,16 @@ model Profile {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Relacionamento com empresa (obrigatório - um perfil pertence a uma empresa)
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
   // Relacionamentos
   users       User[]
   permissions ProfilePermission[]
-  companies   ProfileCompany[] // Relação many-to-many com empresas
+  dashboards  ProfileDashboard[]
 
   @@map("profiles")
-}
-
-// Relacionamento N:N entre Perfis e Empresas
-model ProfileCompany {
-  id String @id @default(cuid())
-
-  profileId String
-  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  companyId String
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@unique([profileId, companyId])
-  @@map("profile_companies")
 }
 
 // Dashboards do Power BI
@@ -101,7 +89,8 @@ model Dashboard {
 
   // Relacionamento com empresa
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id])
+  company   Company?  @relation(fields: [companyId], references: [id])
+  profiles  ProfileDashboard[]
 
   @@map("dashboards")
 }
@@ -118,7 +107,7 @@ model Permission {
   @@map("permissions")
 }
 
-// Relacionamento N:N entre Perfis e Permissões + Dashboards específicos
+// Relacionamento N:N entre Perfis e Permissões
 model ProfilePermission {
   id String @id @default(cuid())
 
@@ -130,6 +119,20 @@ model ProfilePermission {
 
   @@unique([profileId, permissionId])
   @@map("profile_permissions")
+}
+
+// Relacionamento N:N entre Perfis e Dashboards
+model ProfileDashboard {
+  id String @id @default(cuid())
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id])
+
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id])
+
+  @@unique([profileId, dashboardId])
+  @@map("profile_dashboards")
 }
 
 // Sessões para autenticação JWT

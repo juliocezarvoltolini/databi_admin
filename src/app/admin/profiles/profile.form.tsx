@@ -2,62 +2,31 @@
 "use client";
 
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  authenticateUser,
-  getCurrentUser,
-  verifyToken,
-} from "@/lib/auth";
+import { CompanyClient, DashboardClient, PermissionClient, ProfileClient, UserClient } from "../layout";
 
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
-  permissions: z.array(z.string()).min(1, "Selecione pelo menos uma permissão"),
-  companyIds: z.array(z.string()).optional(),
+  permissions: z.array(z.string()),
+  companyId: z.string().optional(),
+  dashboards: z.array(z.string()).min(1, 'Selecione pelo menos um dashboard'),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  company: Company;
-}
 
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface Company {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface Profile {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  createdAt: string;
-  userCount: number;
-  permissions: Permission[];
-  companies: Company[];
-}
 
 interface Props {
-  user: User
-  profile?: Profile | null;
-  allPermissions: Permission[];
-  allCompanies: Company[];
+  user: UserClient
+  profile?: ProfileClient | null;
+  allPermissions: PermissionClient[];
+  allCompanies: CompanyClient[];
+  allDashboards?: DashboardClient[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -67,6 +36,7 @@ export default function ProfileForm({
   profile,
   allPermissions,
   allCompanies,
+  allDashboards,
   onSuccess,
   onCancel,
 }: Props) {
@@ -90,12 +60,14 @@ export default function ProfileForm({
       name: profile?.name || "",
       description: profile?.description || "",
       permissions: profile?.permissions.map((p) => p.id) || [],
-      companyIds: profile?.companies.map((c) => c.id) || [],
+      companyId: profile?.company?.id || user.company?.id || "",
+      dashboards: profile?.dashboards?.map((d) => d.id) || []
     },
   });
 
   const selectedPermissions = watch("permissions") || [];
-  const selectedCompanies = watch("companyIds") || [];
+  const selectedCompany = watch("companyId") || "";
+  const selectedDashboards = watch("dashboards") || [];
 
   // Agrupar permissões por categoria
   const permissionsByCategory = allPermissions.reduce((acc, permission) => {
@@ -104,7 +76,7 @@ export default function ProfileForm({
     }
     acc[permission.category].push(permission);
     return acc;
-  }, {} as Record<string, Permission[]>);
+  }, {} as Record<string, PermissionClient[]>);
 
   const handlePermissionChange = (permissionId: string, checked: boolean) => {
     const currentPermissions = getValues("permissions");
@@ -140,17 +112,28 @@ export default function ProfileForm({
     }
   };
 
-  const handleCompanyChange = (companyId: string, checked: boolean) => {
-    const isEditing = !!profile;
-    const currentCompanies = getValues("companyIds");
+  const handleCompanyChange = (companyId: string) => {
+    setValue("companyId", companyId);
+  };
+
+  const handleDashboardChange = (dashboardId: string, checked: boolean) => {
+    const currentDashboards = getValues("dashboards") || [];
 
     if (checked) {
-      setValue("companyIds", [...currentCompanies, companyId]);
+      setValue("dashboards", [...currentDashboards, dashboardId]);
     } else {
       setValue(
-        "companyIds",
-        currentCompanies.filter((id) => id !== companyId)
+        "dashboards",
+        currentDashboards.filter((id) => id !== dashboardId)
       );
+    }
+  };
+
+  const handleSelectAllDashboards = (checked: boolean) => {
+    if (checked) {
+      setValue("dashboards", allDashboards.map((d) => d.id));
+    } else {
+      setValue("dashboards", []);
     }
   };
 
@@ -166,11 +149,11 @@ export default function ProfileForm({
     setError("");
 
     if (allCompanies.length == 0 && user.company) {
-      data.companyIds.push(user.company.id);
+      data.companyId = user.company.id;
     }
 
     try {
-      const url = isEditing ? `/api/profiles/${profile.id}` : "/api/profiles";
+      const url = isEditing ? `/api/profiles/${profile!.id}` : "/api/profiles";
       const method = isEditing ? "PUT" : "POST";
 
       console.log(JSON.stringify(data));
@@ -257,9 +240,9 @@ export default function ProfileForm({
       {/* Empresas */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empresas</label>
-        {errors.companyIds && (
+        {errors.companyId && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-            {errors.companyIds.message}
+            {errors.companyId.message}
           </p>
         )}
 
@@ -270,12 +253,11 @@ export default function ProfileForm({
               className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
             >
               <input
-                type="checkbox"
-                checked={selectedCompanies.includes(company.id)}
-                onChange={(e) =>
-                  handleCompanyChange(company.id, e.target.checked)
-                }
-                className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                type="radio"
+                name="company"
+                checked={selectedCompany === company.id}
+                onChange={() => handleCompanyChange(company.id)}
+                className="text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                 disabled={loading}
               />
               <div className="flex-1 min-w-0">
@@ -286,6 +268,109 @@ export default function ProfileForm({
               </div>
             </label>
           ))}
+        </div>
+      </div>
+
+      {/* Dashboards */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dashboards</label>
+        {errors.dashboards && (
+          <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+            {errors.dashboards.message}
+          </p>
+        )}
+
+        <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4">
+          {allDashboards.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <svg
+                    className="w-5 h-5 text-gray-600 dark:text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Dashboards Disponíveis
+                  </h3>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    ({allDashboards.length} disponíveis)
+                  </span>
+                </div>
+
+                <label className="flex items-center space-x-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selectedDashboards.length === allDashboards.length && allDashboards.length > 0}
+                    onChange={(e) => handleSelectAllDashboards(e.target.checked)}
+                    className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                    disabled={loading}
+                  />
+                  <span className="text-gray-700 dark:text-gray-300">Selecionar todos</span>
+                </label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {allDashboards.map((dashboard) => (
+                  <label
+                    key={dashboard.id}
+                    className="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedDashboards.includes(dashboard.id)}
+                      onChange={(e) =>
+                        handleDashboardChange(dashboard.id, e.target.checked)
+                      }
+                      className="mt-1 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
+                      disabled={loading}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {dashboard.name}
+                      </p>
+                      {dashboard.description && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          {dashboard.description}
+                        </p>
+                      )}
+                     
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-8">
+              <svg
+                className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+                Nenhum dashboard disponível
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Não há dashboards cadastrados no sistema ainda.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -401,6 +486,30 @@ export default function ProfileForm({
         </div>
       )}
 
+      {/* Resumo dos dashboards selecionados */}
+      {selectedDashboards.length > 0 && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <h4 className="font-medium text-green-800 dark:text-green-300 mb-2">
+            Dashboards - {selectedDashboards.length} selecionado(s)
+          </h4>
+          <div className="flex flex-wrap gap-2">
+            {selectedDashboards.map((dashboardId) => {
+              const dashboard = allDashboards.find(
+                (d) => d.id === dashboardId
+              );
+              return dashboard ? (
+                <span
+                  key={dashboardId}
+                  className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+                >
+                  {dashboard.name}
+                </span>
+              ) : null;
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Ações */}
       <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <button
@@ -414,7 +523,7 @@ export default function ProfileForm({
 
         <button
           type="submit"
-          disabled={loading || selectedPermissions.length === 0}
+          disabled={loading || selectedPermissions.length === 0 && selectedDashboards.length === 0}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
         >
           {loading ? (

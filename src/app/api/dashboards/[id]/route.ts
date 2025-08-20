@@ -43,13 +43,33 @@ export async function GET(
       );
     }
 
+    // Buscar perfil do usuário para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
+    const whereClause: any = {
+       id: resolvedParams.id,
+       isActive: true,
+    }
+
+    if (userWithProfile.profile.companyId) {
+      whereClause.companyId = userWithProfile.profile.companyId;
+    }
+
+    console.log("Where clause for dashboard:", whereClause); // Debugging line
+
     // Buscar dashboard
     const dashboard = await prisma.dashboard.findFirst({
-      where: {
-        id: resolvedParams.id,
-        companyId: user.companyId,
-        isActive: true,
-      },
+      where: whereClause,
       include: {
         company: {
           select: {
@@ -127,11 +147,26 @@ export async function PUT(
       );
     }
 
+    // Buscar perfil do usuário para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
     const whereClause: any = {
       id: resolvedParams.id,
     };
 
-    if (user.companyId) whereClause.companyId = user.companyId;
+    if (userWithProfile.profile.companyId) {
+      whereClause.companyId = userWithProfile.profile.companyId;
+    }
 
     // Verificar se dashboard existe e pertence à empresa
     const existingDashboard = await prisma.dashboard.findFirst({
@@ -148,7 +183,7 @@ export async function PUT(
     const { name, description, powerbiUrl, companyId } = validation.data!;
     
     // Determinar a empresa do dashboard  
-    const targetCompanyId = companyId || user.companyId;
+    const targetCompanyId = companyId || userWithProfile.profile.companyId;
 
     // Verificar se já existe outro dashboard com esse nome na empresa
     const duplicateDashboard = await prisma.dashboard.findFirst({
@@ -234,11 +269,24 @@ export async function DELETE(
       );
     }
 
+    // Buscar perfil do usuário para determinar empresa
+    const userWithProfile = await prisma.user.findUnique({
+      where: { id: user.userId },
+      include: { profile: true },
+    });
+
+    if (!userWithProfile?.profile) {
+      return NextResponse.json(
+        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
     // Verificar se dashboard existe e pertence à empresa
     const existingDashboard = await prisma.dashboard.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: user.companyId,
+        companyId: userWithProfile.profile.companyId,
       },
     });
 

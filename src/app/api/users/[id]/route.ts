@@ -39,7 +39,7 @@ export async function GET(
     const targetUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: user.companyId,
+ 
       },
       select: {
         id: true,
@@ -126,7 +126,7 @@ export async function PUT(
     const existingUser = await prisma.user.findFirst({
       where: {
         id: resolvedParams.id,
-        companyId: user.companyId,
+ 
       },
     });
 
@@ -179,11 +179,7 @@ export async function PUT(
                     permission: true,
                   },
                 },
-                companies: {
-                  include: {
-                    company: true,
-                  },
-                },
+                company: true,
               },
             },
           },
@@ -198,11 +194,8 @@ export async function PUT(
                   permission: true,
                 },
               },
-              companies: {
-                include: {
-                  company: true,
-                },
-              },
+              company: true,
+             
             },
           });
 

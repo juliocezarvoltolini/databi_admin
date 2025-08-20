@@ -113,6 +113,12 @@ export async function getCurrentUser(userId: string) {
               permission: true,
             },
           },
+          dashboards: {
+            include: {
+              dashboard: true,
+            }
+          },
+          company: true
         },
       },
     },

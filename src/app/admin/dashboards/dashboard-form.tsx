@@ -80,6 +80,11 @@ export default function DashboardForm({
 
     try {
       const url = isEditing ? `/api/dashboards/${dashboard.id}` : "/api/dashboards";
+
+      if (data.companyId === "") {
+        delete data.companyId; // Remover companyId se estiver vazio
+      }
+
       const method = isEditing ? "PUT" : "POST";
       console.log("Enviando dados para a API:", data);
       const response = await fetch(url, {

@@ -116,7 +116,7 @@ async function main() {
       adminProfile = await prisma.profile.create({
         data: {
           name: "Administrador",
-          description: "Acesso total ao sistema da empresa",
+          description: "Acesso totl ao sistema da empresa",
 
         },
       });

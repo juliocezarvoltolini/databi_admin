@@ -4,33 +4,15 @@
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Company, Profile } from "@/generated/prisma";
+import { Company, Dashboard, User } from "@/generated/prisma";
+import { PermissionsEnum, UserClient } from "./layout";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  company: Company;
-  profile: Profile;
-}
 
-interface Permissions {
-  canViewUsers: boolean;
-  canViewProfiles: boolean;
-  canManageDashboards: boolean;
-  canViewCompanies: boolean;
-  isAdmin: boolean;
-}
 
-interface Dashboard {
-  id: string;
-  name: string;
-  powerbiUrl: string;
-}
 
 interface Props {
-  user: User;
-  permissions: Permissions;
+  user: UserClient;
+  permissions: PermissionsEnum;
   companyDashboards: Dashboard[];
   children: React.ReactNode;
 }
@@ -40,7 +22,7 @@ interface MenuItem {
   name: string;
   icon: string;
   href: string;
-  permission: keyof Permissions;
+  permission: string;
   description: string;
 }
 
@@ -54,6 +36,7 @@ export default function AdminLayoutClient({
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
 
   // Menu items baseados em permissões
   const menuItems: MenuItem[] = [
@@ -198,7 +181,7 @@ export default function AdminLayoutClient({
                   <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                     {user.name}
                   </p>
-                  {user.profile && (
+                  {user.profileId && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {user.profile.name}
                     </p>

@@ -5,27 +5,17 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface ProfileWithPermissions {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  permissions: Permission[];
-}
+import {
+  CompanyClient,
+  PermissionClient,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 
 const userFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   email: z.string().email("Email inválido"),
-  password: z
-    .string()
-    .min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   profileId: z.string().optional(),
   companyId: z.string().optional(),
 });
@@ -46,40 +36,18 @@ const editUserFormSchema = z.object({
 type UserFormData = z.infer<typeof userFormSchema>;
 type EditUserFormData = z.infer<typeof editUserFormSchema>;
 
-interface UserData {
-  id: string;
-  email: string;
-  name: string;
-  isActive: boolean;
-  createdAt: string;
-  company?: {
-    id: string;
-    name: string;
-  } | null;
-  profile: {
-    id: string;
-    name: string;
-    description: string;
-  } | null;
-}
-
-interface Company {
-  id: string;
-  name: string;
-  slug: string;
-  isActive: boolean;
-}
-
 interface Props {
-  user?: UserData | null;
-  profiles: ProfileWithPermissions[];
-  companies: Company[];
+  userLogged: UserClient;
+  user?: UserClient | null;
+  profiles: ProfileClient[];
+  companies: CompanyClient[];
   isSystemAdmin: boolean;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
 export default function UserForm({
+  userLogged,
   user,
   profiles,
   companies,
@@ -104,15 +72,16 @@ export default function UserForm({
       name: user?.name || "",
       email: user?.email || "",
       profileId: user?.profile?.id || "",
-      companyId: user?.company?.id || "",
+      companyId: user?.company?.id || userLogged.company?.id || "",
     },
   });
 
   const selectedProfileId = watch("profileId");
-  const selectedProfile = profiles.find((p: ProfileWithPermissions) => p.id === selectedProfileId);
+  const selectedProfile = profiles.find(
+    (p: ProfileClient) => p.id === selectedProfileId
+  );
 
   const onSubmit = async (data: UserFormData | EditUserFormData) => {
-    console.log("Passou aqui");
     setLoading(true);
     setError("");
 
@@ -137,7 +106,7 @@ export default function UserForm({
             ...(data.password && { password: data.password }),
           };
 
-          console.log(`usuario ${JSON.stringify(payload)}`);
+      console.log(`usuario ${JSON.stringify(payload)}`);
 
       const response = await fetch(url, {
         method,
@@ -264,28 +233,27 @@ export default function UserForm({
         </div>
 
         {/* Empresa */}
-        {isSystemAdmin && (
-          <div>
-            <label className="label-field">Empresa</label>
-            <select
-              {...register("companyId", {})}
-              className="input-field"
-              disabled={loading}
-            >
-              <option value="">Administrador do Sistema (sem empresa)</option>
-              {companies.map((company) => (
-                <option key={company.id} value={company.id}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-            {errors.companyId && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.companyId.message}
-              </p>
-            )}
-          </div>
-        )}
+
+        <div>
+          <label className="label-field">Empresa</label>
+          <select
+            disabled={!isSystemAdmin || loading}
+            {...register("companyId")}
+            className="input-field"
+          >
+            <option key="" value="">Administrador do Sistema (sem empresa)</option>
+            {companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name}
+              </option>
+            ))}
+          </select>
+          {errors.companyId && (
+            <p className="mt-1 text-sm text-red-600">
+              {errors.companyId.message}
+            </p>
+          )}
+        </div>
 
         {/* Perfil */}
         <div>
@@ -296,7 +264,7 @@ export default function UserForm({
             disabled={loading}
           >
             <option value="">Selecione um perfil</option>
-            {profiles.map((profile: ProfileWithPermissions) => (
+            {profiles.map((profile: ProfileClient) => (
               <option key={profile.id} value={profile.id}>
                 {profile.name}
               </option>
@@ -325,29 +293,31 @@ export default function UserForm({
               Permissões incluídas:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {selectedProfile.permissions?.map((permission: Permission) => (
-                <div
-                  key={permission.id}
-                  className="flex items-center space-x-2"
-                >
-                  <svg
-                    className="w-4 h-4 text-green-600 dark:text-green-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+              {selectedProfile.permissions?.map(
+                (permission: PermissionClient) => (
+                  <div
+                    key={permission.id}
+                    className="flex items-center space-x-2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span className="text-sm text-blue-700 dark:text-blue-300">
-                    {permission.description}
-                  </span>
-                </div>
-              ))}
+                    <svg
+                      className="w-4 h-4 text-green-600 dark:text-green-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="text-sm text-blue-700 dark:text-blue-300">
+                      {permission.description}
+                    </span>
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>

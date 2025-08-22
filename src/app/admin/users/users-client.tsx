@@ -6,82 +6,42 @@ import { useRouter } from "next/navigation";
 import UserForm from "./user-form";
 import UserList from "./user-list";
 import { Profile } from "@/generated/prisma";
-import { 
-  AdminLayout, 
-  PageHeader, 
-  StatsCard, 
-  AdminCard, 
-  AdminButton, 
+import {
+  AdminLayout,
+  PageHeader,
+  StatsCard,
+  AdminCard,
+  AdminButton,
   LoadingSpinner,
   UsersIcon,
   CheckCircleIcon,
   ProfilesIcon,
-  PlusIcon
+  PlusIcon,
 } from "@/components/admin";
-
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface ProfileWithPermissions {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  permissions: Permission[];
-}
-
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  company: Company;
-  profile: Profile;
-}
-
-interface UserData {
-  id: string;
-  email: string;
-  name: string;
-  isActive: boolean;
-  createdAt: string;
-  profile: {
-    id: string;
-    name: string;
-    description: string;
-  } | null;
-}
-
-interface Company {
-  id: string;
-  name: string;
-  slug: string;
-  isActive: boolean;
-}
-
-export interface UserPermissions {
-  canCreate: boolean;
-  canEdit: boolean;
-  canDelete: boolean;
-}
+import {
+  CompanyClient,
+  PermissionVerbs,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 
 interface Props {
-  user: User;
-  permissions: UserPermissions;
+  user: UserClient;
+  permissions: PermissionVerbs;
   isSystemAdmin: boolean;
 }
 
-export default function UsersClient({ user, permissions, isSystemAdmin }: Props) {
-  const [users, setUsers] = useState<UserData[]>([]);
-  const [profiles, setProfiles] = useState<ProfileWithPermissions[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
+export default function UsersClient({
+  user,
+  permissions,
+  isSystemAdmin,
+}: Props) {
+  const [users, setUsers] = useState<UserClient[]>([]);
+  const [profiles, setProfiles] = useState<ProfileClient[]>([]);
+  const [companies, setCompanies] = useState<CompanyClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [editingUser, setEditingUser] = useState<UserClient | null>(null);
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -120,6 +80,8 @@ export default function UsersClient({ user, permissions, isSystemAdmin }: Props)
             setCompanies(companiesResult.data);
           }
         }
+      } else {
+        setCompanies((value) => value.concat(user.company));
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -143,7 +105,7 @@ export default function UsersClient({ user, permissions, isSystemAdmin }: Props)
     setShowForm(true);
   };
 
-  const handleEditUser = (userData: UserData) => {
+  const handleEditUser = (userData: UserClient) => {
     setEditingUser(userData);
     setShowForm(true);
   };
@@ -191,12 +153,19 @@ export default function UsersClient({ user, permissions, isSystemAdmin }: Props)
     <AdminLayout>
       <PageHeader
         title="Gestão de Usuários"
-        subtitle={user.company ? `${user.company.name} • Gerencie os usuários e suas permissões` : "Gerencie os usuários e suas permissões"}
+        subtitle={
+          user.company
+            ? `${user.company.name} • Gerencie os usuários e suas permissões`
+            : "Gerencie os usuários e suas permissões"
+        }
         icon={<UsersIcon />}
       />
 
       {error && (
-        <AdminCard variant="elevated" className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+        <AdminCard
+          variant="elevated"
+          className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20"
+        >
           <div className="text-red-800 dark:text-red-200">{error}</div>
         </AdminCard>
       )}
@@ -207,6 +176,7 @@ export default function UsersClient({ user, permissions, isSystemAdmin }: Props)
           variant="elevated"
         >
           <UserForm
+            userLogged={user}
             user={editingUser}
             profiles={profiles}
             companies={companies}

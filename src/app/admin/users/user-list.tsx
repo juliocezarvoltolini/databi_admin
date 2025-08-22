@@ -2,42 +2,16 @@
 "use client";
 
 import { useState } from "react";
-import { UserPermissions } from "./users-client";
+import { PermissionVerbs, ProfileClient, UserClient } from "../layout";
+;
 
-interface Permission {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-}
-
-interface ProfileWithPermissions {
-  id: string;
-  name: string;
-  description: string;
-  isActive: boolean;
-  permissions: Permission[];
-}
-
-interface UserData {
-  id: string;
-  email: string;
-  name: string;
-  isActive: boolean;
-  createdAt: string;
-  profile: {
-    id: string;
-    name: string;
-    description: string;
-  } | null;
-}
 
 
 interface Props {
-  users: UserData[];
-  profiles: ProfileWithPermissions[];
-  permission: UserPermissions;
-  onEdit: (user: UserData) => void;
+  users: UserClient[];
+  profiles: ProfileClient[];
+  permission: PermissionVerbs;
+  onEdit: (user: UserClient) => void;
   onDelete: (userId: string) => void;
 }
 
@@ -69,7 +43,7 @@ export default function UserList({
     return matchesSearch && matchesProfile && matchesStatus;
   });
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
@@ -238,7 +212,10 @@ export default function UserList({
                         <div className="flex justify-end space-x-2">
                           {permission.canEdit && (
                             <button
-                              onClick={() => onEdit(user)}
+                              onClick={() => {
+                                console.log("Editing user:", user);
+                                onEdit(user)
+                              }}
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
                               Editar

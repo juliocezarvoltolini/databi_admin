@@ -65,7 +65,7 @@ export async function GET(
       whereClause.companyId = userWithProfile.profile.companyId;
     }
 
-    console.log("Where clause for dashboard:", whereClause); // Debugging line
+
 
     // Buscar dashboard
     const dashboard = await prisma.dashboard.findFirst({

@@ -42,13 +42,7 @@ export default async function UsersPage() {
 
   return (
     <UsersClient
-      user={{
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        company: user.company,
-        profile: user.profile
-      }}
+      user={user}
       permissions={{
         canCreate: canCreateUsers,
         canEdit: canEditUsers,

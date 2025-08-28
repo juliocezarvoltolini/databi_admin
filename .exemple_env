@@ -1,14 +1,21 @@
-# Environment variables declared in this file are automatically made available to Prisma.
-# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+# Database
+DATABASE_URL="postgresql://usuario:senha@localhost:5432/databi_admin"
 
-# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
-# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+# JWT
+JWT_SECRET="seu-jwt-secret-muito-seguro-aqui"
 
-# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres 
-# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the 
-# one found in a remote Prisma Postgres URL, does not contain any sensitive information.
+# SMTP Configuration for Email Verification
+SMTP_HOST=email-ssl.com.br
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=admin@databi-ge.com.br
+SMTP_PASS=sua-senha
+SMTP_FROM_NAME="Data BI"
+SMTP_FROM_EMAIL=admin@databi-ge.com.br
 
-DATABASE_URL="postgresql://admin:Hxep@5739@localhost:5432/dashboard_manager?schema=public"
+NEXT_PUBLIC_BASE_URL=http://localhost:3001
 
-# JWT Secret - Gere uma chave forte para produção
-JWT_SECRET="sua-chave-secreta-super-forte-aqui-pelo-menos-32-caracteres-de-comprimento"
+# Alternativa com email-ssl.com.br (hostname do certificado)
+# SMTP_HOST=email-ssl.com.br
+# SMTP_PORT=587
+# SMTP_SECURE=false

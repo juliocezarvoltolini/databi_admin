@@ -39,7 +39,6 @@ export default async function AdminPage() {
     "VIEW_COMPANIES"
   );
 
-  console.log("Vai redirecionar")
 
   // Redirecionar para a primeira página disponível
   if (canViewUsers) {
@@ -51,10 +50,10 @@ export default async function AdminPage() {
   } else if (canViewCompanies) {
     redirect("/admin/companies");
   } else if (user.company.dashboards && user.company.dashboards.length > 0) {
-    console.log("Vai para o dash")
+
     redirect(`/admin/dashboard/${user.company.dashboards[0].id}`)
   } else {
-    console.log(
+    console.warn(
       "Usuário não tem permissões administrativas, redirecionando para login"
     );
     // Se não tem nenhuma permissão administrativa, redirecionar para login

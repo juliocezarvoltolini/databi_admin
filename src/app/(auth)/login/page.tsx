@@ -1,24 +1,44 @@
 // src/app/(auth)/login/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginData, type ApiResponse } from "@/lib/types";
 import Link from "next/link";
+import { useThemeSafe } from "@/contexts/ThemeContext";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [emailNotVerified, setEmailNotVerified] = useState<{ userId: string; email: string } | null>(null);
+  const [emailNotVerified, setEmailNotVerified] = useState<{
+    userId: string;
+    email: string;
+  } | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotPasswordEmail, setForgotPasswordEmail] = useState("");
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const themeContext = useThemeSafe();
+
+    let currentTheme = 'dark'; // Tema padrão para SSR
+    
+    useEffect(() => {
+      setMounted(true);
+    }, []);
+  
+    if (mounted) {
+      if (themeContext) {
+        currentTheme = themeContext.theme;
+      } else if (typeof window !== 'undefined') {
+        currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+      }
+    }
 
   const {
     register,
@@ -48,10 +68,10 @@ export default function LoginPage() {
         router.push("/admin");
         router.refresh();
       } else {
-        if ('code' in result && result.code === 'EMAIL_NOT_VERIFIED') {
-          setEmailNotVerified({ 
-            userId: (result as any).userId, 
-            email: data.email 
+        if ("code" in result && result.code === "EMAIL_NOT_VERIFIED") {
+          setEmailNotVerified({
+            userId: (result as any).userId,
+            email: data.email,
           });
         } else {
           setError(result.error || "Erro ao fazer login");
@@ -83,7 +103,9 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (result.success) {
-        setResendMessage("Email de verificação enviado com sucesso! Verifique sua caixa de entrada.");
+        setResendMessage(
+          "Email de verificação enviado com sucesso! Verifique sua caixa de entrada."
+        );
       } else {
         setResendMessage(result.error || "Erro ao enviar email.");
       }
@@ -113,7 +135,9 @@ export default function LoginPage() {
       const result = await response.json();
 
       if (result.success) {
-        setForgotPasswordMessage("Se o email existir em nossa base, você receberá instruções para redefinir sua senha.");
+        setForgotPasswordMessage(
+          "Se o email existir em nossa base, você receberá instruções para redefinir sua senha."
+        );
         setForgotPasswordEmail("");
         setTimeout(() => setShowForgotPassword(false), 3000);
       } else {
@@ -134,7 +158,7 @@ export default function LoginPage() {
           <div className="flex justify-center mb-6">
             <div className="w-40 h-40 flex items-center justify-center">
               <img
-                src="/Logo DataBi - Branco.svg"
+                src={currentTheme === 'dark' ? "/Logo DataBi - Branco.svg" : "/Logo DataBi - Colorido fundo claro.svg"}
                 alt="DataBi Logo"
                 className="w-full h-full object-contain"
               />
@@ -144,17 +168,27 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {error && <div className="alert-error">{error}</div>}
-          
+
           {emailNotVerified && (
             <div className="alert-warning">
               <div className="flex items-start">
-                <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
                 </svg>
                 <div className="flex-1">
                   <h4 className="font-medium">Email não verificado</h4>
                   <p className="text-sm mt-1">
-                    Você precisa verificar seu email antes de fazer login. Verifique sua caixa de entrada para o email enviado para <strong>{emailNotVerified.email}</strong>.
+                    Você precisa verificar seu email antes de fazer login.
+                    Verifique sua caixa de entrada para o email enviado para{" "}
+                    <strong>{emailNotVerified.email}</strong>.
                   </p>
                   <div className="mt-3">
                     <button
@@ -163,11 +197,19 @@ export default function LoginPage() {
                       disabled={resendLoading}
                       className="btn-secondary btn-sm"
                     >
-                      {resendLoading ? "Enviando..." : "Reenviar email de verificação"}
+                      {resendLoading
+                        ? "Enviando..."
+                        : "Reenviar email de verificação"}
                     </button>
                   </div>
                   {resendMessage && (
-                    <p className={`text-sm mt-2 ${resendMessage.includes('sucesso') ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    <p
+                      className={`text-sm mt-2 ${
+                        resendMessage.includes("sucesso")
+                          ? "text-green-600 dark:text-green-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}
+                    >
                       {resendMessage}
                     </p>
                   )}

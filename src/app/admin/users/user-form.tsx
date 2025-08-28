@@ -60,14 +60,11 @@ export default function UserForm({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [allCompaniesAvailable, setAllCompaniesAvailable] = useState((companies && companies.length > 0) ? companies : (user.company ? [user.company] : []))
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [sendResetLoading, setSendResetLoading] = useState(false);
   const [sendResetMessage, setSendResetMessage] = useState("");
-
-  console.log(allCompaniesAvailable, companies, user)
 
   const isEditing = !!user;
 

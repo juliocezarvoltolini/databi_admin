@@ -83,10 +83,10 @@ export default function ProfilesClient({ user, permissions }: Props) {
         }
       }
 
-      // Carregar empresas
-      if (user.profile.company) {
-        const companyResponse = await fetch(
-          `/api/companies/${user.profile.company.id}`
+       console.log("Vai pesquisar", user, "user.profile.company", (user.profile.company))
+
+       const companyResponse = await fetch(
+          `/api/companies/${user.company.id}`
         );
 
         if (companyResponse.ok) {
@@ -96,17 +96,12 @@ export default function ProfilesClient({ user, permissions }: Props) {
             companiesData = [companyResult.data]; // Use variável local
             setAllCompanies(companiesData);
           }
+        } else if (user.company) {
+          setAllCompanies((value) => value.concat(user.company))
+        } else {
+          setAllCompanies((value) => value = [])
         }
-      } else {
-        const companiesResponse = await fetch("/api/companies");
-        if (companiesResponse.ok) {
-          const companiesResult = await companiesResponse.json();
-          if (companiesResult.success) {
-            companiesData = companiesResult.data; // Use variável local
-            setAllCompanies(companiesData);
-          }
-        }
-      }
+    
 
       // Carregar dashboards
       const dashboardsResponse = await fetch("/api/dashboards");
@@ -130,7 +125,7 @@ export default function ProfilesClient({ user, permissions }: Props) {
         ) {
           setAllDashboards(user.company.dashboards);
         } else {
-          setAllDashboards([])
+          setAllDashboards([]);
         }
       }
     } catch (error) {
@@ -157,7 +152,6 @@ export default function ProfilesClient({ user, permissions }: Props) {
 
     const data = await response.json();
     const profileData: ProfileClient = { ...data.data };
-    console.log("Perfil carregado para edição:", data);
 
     setEditingProfile(profileData);
     setShowForm(true);
@@ -299,7 +293,9 @@ export default function ProfilesClient({ user, permissions }: Props) {
 
           {/* Lista de perfis */}
           <ProfileList
-            profiles={profiles}
+            userLogged={user}
+       
+            allCompanies={allCompanies}
             permissions={permissions}
             onEdit={handleEditProfile}
             onDelete={handleDeleteProfile}

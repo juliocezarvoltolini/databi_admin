@@ -2,35 +2,62 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PermissionVerbs, ProfileClient } from "../layout";
+import {
+  CompanyClient,
+  PermissionVerbs,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 
 interface ProfileWithUserCount extends ProfileClient {
   userCount: number;
 }
 
-
 interface Props {
-  profiles: ProfileWithUserCount[];
+  userLogged: UserClient;
   permissions: PermissionVerbs;
+  allCompanies: CompanyClient[];
   onEdit: (profile: ProfileClient) => void;
   onDelete: (profileId: string) => void;
 }
 
 export default function ProfileList({
-  profiles,
+  userLogged,
   permissions,
+  allCompanies,
   onEdit,
   onDelete,
 }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedProfile, setExpandedProfile] = useState<string | null>(null);
+  const [filterCompany, setFilterCompany] = useState("");
+  const [profiles, setProfiles] = useState<ProfileWithUserCount[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Filtrar perfis
-  const filteredProfiles = profiles.filter(
-    (profile) =>
-      profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const url = new URL("/api/profiles", window.location.origin);
+      if (filterCompany.length > 0)
+        url.searchParams.append("companyId", filterCompany);
+
+      if (searchTerm.length > 0) url.searchParams.append("name", searchTerm);
+
+      const usersResponse = await fetch(url);
+      if (usersResponse.ok) {
+        const usersResult = await usersResponse.json();
+        if (usersResult.success) {
+          setProfiles(usersResult.data);
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, [searchTerm, filterCompany]);
 
   const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -72,38 +99,53 @@ export default function ProfileList({
   return (
     <div className="card">
       <div className="card-header">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+        <div className="flex flex-col space-y-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Lista de Perfis ({filteredProfiles.length})
+            Lista de Perfis ({isLoading ? "..." : profiles.length})
           </h3>
 
-          {/* Busca */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Buscar perfis..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10 min-w-64"
-            />
-            <svg
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+            <div className="relative flex-1 min-w-64">
+              <input
+                type="text"
+                placeholder="Buscar perfis..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="input-field pl-10 w-full min-w-64"
               />
-            </svg>
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              className="input-field max-w-80"
+            >
+              {allCompanies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+              {(!userLogged.companyId || userLogged.companyId == "") && (
+                <option value="">Todas as empresas</option>
+              )}
+            </select>
           </div>
         </div>
       </div>
 
-      {filteredProfiles.length === 0 ? (
+      {profiles.length === 0 ? (
         <div className="text-center py-12">
           <svg
             className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
@@ -129,7 +171,7 @@ export default function ProfileList({
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredProfiles.map((profile) => (
+          {profiles.map((profile) => (
             <div
               key={profile.id}
               className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-md transition-shadow"

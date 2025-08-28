@@ -56,16 +56,8 @@ export default function ProfileForm({
       ? [{ id: user.companyId }]
       : []
   );
-  console.log(user, allCompanies, allCompaniesAvailable);
+ 
   const isEditing = !!profile;
-
-  console.log("ProfileForm props:", {
-    user,
-    profile,
-    allPermissions,
-    allCompanies,
-    allDashboards,
-  });
 
   const {
     register,
@@ -92,8 +84,6 @@ export default function ProfileForm({
   useEffect(() => {
     // Filtrar dashboards disponíveis com base na empresa selecionada
     const companyId = getValues("companyId");
-    console.log("Selected companyId:", companyId);
-    console.log("All dashboards:", allDashboards);
 
     if (companyId) {
       const filteredDashboards =
@@ -217,8 +207,6 @@ export default function ProfileForm({
     try {
       const url = isEditing ? `/api/profiles/${profile!.id}` : "/api/profiles";
       const method = isEditing ? "PUT" : "POST";
-
-      console.log(JSON.stringify(data));
 
       const response = await fetch(url, {
         method,

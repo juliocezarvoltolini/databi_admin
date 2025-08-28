@@ -45,9 +45,6 @@ export async function GET(request: NextRequest) {
     const whereClause = userWithProfile.profile.companyId 
       ? { companyId: userWithProfile.profile.companyId, isActive: true }
       : { isActive: true };
-
-
-          console.log("Where clause for dashboard:", whereClause); // Debugging line
     
     const dashboards = await prisma.dashboard.findMany({
       where: whereClause,

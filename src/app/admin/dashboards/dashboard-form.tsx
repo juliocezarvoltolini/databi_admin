@@ -73,8 +73,7 @@ export default function DashboardForm({
   const powerbiUrl = watch("powerbiUrl");
 
   const onSubmit = async (data: DashboardFormData) => {
-    console.log("🚀 onSubmit chamado!");
-    console.log("Dados do formulário:", data);
+
     setLoading(true);
     setError("");
 
@@ -86,7 +85,7 @@ export default function DashboardForm({
       }
 
       const method = isEditing ? "PUT" : "POST";
-      console.log("Enviando dados para a API:", data);
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -97,7 +96,7 @@ export default function DashboardForm({
 
       const result = await response.json();
 
-      console.log("Resultado da API:", result);
+
 
       if (result.success) {
         onSuccess();
@@ -120,7 +119,7 @@ export default function DashboardForm({
 
   const handleFormSubmit = handleSubmit(
     (data) => {
-      console.log("✅ Validação passou, chamando onSubmit:", data);
+   
       onSubmit(data);
     },
     (errors) => {
@@ -264,7 +263,6 @@ export default function DashboardForm({
           type="submit"
           disabled={loading}
           className="btn-primary"
-          onClick={() => console.log("🔴 Botão clicado!")}
         >
           {loading ? (
             <div className="flex items-center">

@@ -1,47 +1,65 @@
 // src/app/admin/users/user-list.tsx
 "use client";
 
-import { useState } from "react";
-import { PermissionVerbs, ProfileClient, UserClient } from "../layout";
-;
-
-
-
+import { useEffect, useState } from "react";
+import {
+  CompanyClient,
+  PermissionVerbs,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 interface Props {
+  userLogged: UserClient;
   users: UserClient[];
   profiles: ProfileClient[];
   permission: PermissionVerbs;
+  allCompanies: CompanyClient[];
   onEdit: (user: UserClient) => void;
   onDelete: (userId: string) => void;
 }
 
 export default function UserList({
-  users,
+  userLogged,
   profiles,
   permission,
+  allCompanies,
   onEdit,
   onDelete,
 }: Props) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterProfile, setFilterProfile] = useState("");
+  const [filterCompany, setFilterCompany] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [users, setUsers] = useState<UserClient[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const url = new URL("/api/users", window.location.origin);
+        if (filterCompany.length > 0)
+          url.searchParams.append("companyId", filterCompany);
+        if (filterProfile.length > 0)
+          url.searchParams.append("profileId", filterProfile);
+        if (filterStatus.length > 0)
+          url.searchParams.append("filterStatus", filterStatus);
+        if (searchTerm.length > 0) url.searchParams.append("name", searchTerm);
 
-  // Filtrar usuários
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+        const usersResponse = await fetch(url);
+        if (usersResponse.ok) {
+          const usersResult = await usersResponse.json();
+          if (usersResult.success) {
+            setUsers(usersResult.data);
+          }
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    const matchesProfile = !filterProfile || user.profile?.id === filterProfile;
-
-    const matchesStatus =
-      !filterStatus ||
-      (filterStatus === "active" && user.isActive) ||
-      (filterStatus === "inactive" && !user.isActive);
-
-    return matchesSearch && matchesProfile && matchesStatus;
-  });
+    fetchUsers();
+  }, [filterProfile, filterCompany, filterStatus, searchTerm]);
 
   const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString("pt-BR", {
@@ -56,7 +74,7 @@ export default function UserList({
       <div className="card-header">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Lista de Usuários ({filteredUsers.length})
+            Lista de Usuários ({isLoading ? '...' : users.length})
           </h3>
 
           {/* Filtros */}
@@ -100,6 +118,21 @@ export default function UserList({
               <option value="null">Sem perfil</option>
             </select>
 
+            <select
+              value={filterCompany}
+              onChange={(e) => setFilterCompany(e.target.value)}
+              className="input-field min-w-48"
+            >
+              {allCompanies.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name}
+                </option>
+              ))}
+              {(!userLogged.companyId || userLogged.companyId == "") && (
+                <option value="">Todas as Empresas</option>
+              )}
+            </select>
+
             {/* Filtro por status */}
             <select
               value={filterStatus}
@@ -114,7 +147,32 @@ export default function UserList({
         </div>
       </div>
 
-      {filteredUsers.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12">
+          <div className="flex justify-center items-center space-x-2">
+            <svg
+              className="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <span className="text-gray-600 dark:text-gray-300">Carregando usuários...</span>
+          </div>
+        </div>
+      ) : users.length === 0 ? (
         <div className="text-center py-12">
           <svg
             className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500"
@@ -165,8 +223,11 @@ export default function UserList({
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {users.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -213,8 +274,7 @@ export default function UserList({
                           {permission.canEdit && (
                             <button
                               onClick={() => {
-                                console.log("Editing user:", user);
-                                onEdit(user)
+                                onEdit(user);
                               }}
                               className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                             >
@@ -240,7 +300,7 @@ export default function UserList({
 
           {/* Versão mobile - cards */}
           <div className="md:hidden space-y-4">
-            {filteredUsers.map((user) => (
+            {users.map((user) => (
               <div
                 key={user.id}
                 className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4"
@@ -250,18 +310,24 @@ export default function UserList({
                     <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {user.name}
                     </h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {user.email}
+                    </p>
 
                     <div className="mt-2 space-y-1">
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Perfil:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Perfil:
+                        </span>
                         <span className="text-xs text-gray-900 dark:text-gray-100">
                           {user.profile?.name || "Sem perfil"}
                         </span>
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Status:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Status:
+                        </span>
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                             user.isActive

@@ -238,9 +238,11 @@ export default function UsersClient({
 
           {/* Lista de usuários */}
           <UserList
+            userLogged={user}
             users={users}
             profiles={profiles}
             permission={permissions}
+            allCompanies={companies}
             onEdit={handleEditUser}
             onDelete={handleDeleteUser}
           />

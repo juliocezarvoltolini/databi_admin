@@ -20,10 +20,18 @@ export async function GET(request: NextRequest) {
       return createAuthErrorResponse(authResult.error!, authResult.status);
     }
 
+    const searhParams = request.nextUrl.searchParams;
+
+    const companyId = searhParams.get("companyId");
+    const profileId = searhParams.get("profileId");
+    const filterStatus = searhParams.get("filterStatus");
+    const name = searhParams.get("name");
+
     const { user } = authResult;
 
     // Verificar permissão
     const canViewUsers = await hasPermission(user.userId, "VIEW_USERS");
+    const canViewCompanies = await hasPermission(user.userId, "VIEW_COMPANIES");
     if (!canViewUsers) {
       return NextResponse.json(
         {
@@ -36,9 +44,20 @@ export async function GET(request: NextRequest) {
 
     // Buscar usuários da empresa (ou todos se for administrador do sistema)
 
-    const whereClause = user.companyId
-      ? { companyId: user.companyId, isActive: true }
-      : { isActive: true };
+    const whereClause: any = user.companyId
+      ? { companyId: user.companyId }
+      : {};
+
+    if (filterStatus && filterStatus.includes("inactive"))
+      whereClause.isActive = false;
+    else whereClause.isActive = true;
+
+    if (canViewCompanies && companyId && companyId.length > 0)
+      whereClause.companyId = companyId;
+
+    if (profileId && profileId.length > 0) whereClause.profileId = profileId;
+
+    if (name && name.length > 0) whereClause.name = {startsWith: name};
 
     const users = await prisma.user.findMany({
       where: whereClause,
@@ -121,7 +140,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, name, profileId, companyId } = validation.data!;
-     console.log("Creating user with data:", { email, name, profileId, companyId });
+
     // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -164,10 +183,8 @@ export async function POST(request: NextRequest) {
 
     // Se o usuário está sendo criado para uma empresa específica, verificar se o perfil está associado a ela
     if (targetCompanyId) {
-      profileWhere.companyId = targetCompanyId
+      profileWhere.companyId = targetCompanyId;
     }
-
-    console.log("Verifying profile with conditions:", profileWhere);
 
     const profile = await prisma.profile.findFirst({
       where: profileWhere,
@@ -284,17 +301,18 @@ export async function POST(request: NextRequest) {
     };
 
     // Só incluir company se o usuário tiver uma empresa
-    const userSelect = targetCompanyId !== null 
-      ? {
-          ...baseUserSelect,
-          company: {
-            select: {
-              id: true,
-              name: true,
+    const userSelect =
+      targetCompanyId !== null
+        ? {
+            ...baseUserSelect,
+            company: {
+              select: {
+                id: true,
+                name: true,
+              },
             },
-          },
-        }
-      : baseUserSelect;
+          }
+        : baseUserSelect;
 
     const newUser = await prisma.user.create({
       data: userData,
@@ -305,29 +323,35 @@ export async function POST(request: NextRequest) {
     try {
       const token = await generateEmailVerificationToken(newUser.id);
       const emailResult = await sendEmailVerification(email, name, token);
-      
+
       if (emailResult.success) {
         return NextResponse.json({
           success: true,
-          message: "Usuário criado com sucesso! Um email de verificação foi enviado.",
+          message:
+            "Usuário criado com sucesso! Um email de verificação foi enviado.",
           data: newUser,
           emailSent: true,
         } as ApiResponse);
       } else {
-        console.error('Erro ao enviar email de verificação:', emailResult.error);
+        console.error(
+          "Erro ao enviar email de verificação:",
+          emailResult.error
+        );
         return NextResponse.json({
           success: true,
-          message: "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
+          message:
+            "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
           data: newUser,
           emailSent: false,
           emailError: emailResult.error,
         } as ApiResponse);
       }
     } catch (emailError) {
-      console.error('Erro ao processar email de verificação:', emailError);
+      console.error("Erro ao processar email de verificação:", emailError);
       return NextResponse.json({
         success: true,
-        message: "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
+        message:
+          "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
         data: newUser,
         emailSent: false,
       } as ApiResponse);

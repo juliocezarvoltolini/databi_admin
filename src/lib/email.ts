@@ -54,6 +54,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
     };
 
     const result = await transporter.sendMail(mailOptions);
+    
     console.log('Email enviado:', result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {

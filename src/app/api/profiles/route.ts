@@ -23,8 +23,14 @@ export async function GET(request: NextRequest) {
 
     const { user } = authResult;
 
+    const searchParams = request.nextUrl.searchParams;
+
+    const companyId = searchParams.get("companyId");
+    const name = searchParams.get("name");
+
     // Verificar permissão para visualizar perfis
     const canViewProfiles = await hasPermission(user.userId, "VIEW_PROFILES");
+    const canViewCompanies = await hasPermission(user.userId, "VIEW_COMPANIES");
     if (!canViewProfiles) {
       return NextResponse.json(
         {
@@ -35,30 +41,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar usuário com perfil para determinar empresa
-    const userWithProfile = await prisma.user.findUnique({
-      where: { id: user.userId },
-      include: { profile: true },
-    });
 
-    if (!userWithProfile?.profile) {
-      return NextResponse.json(
-        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
-        { status: 403 }
-      );
-    }
+    const whereClause: any = user.companyId
+      ? { companyId: user.companyId }
+      : {};
 
-    // Buscar perfis da empresa do perfil do usuário
-    const whereClauses: any = {
-      isActive: true,
-    };
+    if (canViewCompanies && companyId && companyId.length > 0)
+      whereClause.companyId = companyId;
 
-    if (userWithProfile.profile.companyId) {
-      whereClauses.companyId = userWithProfile.profile.companyId;
-    }
+    if (name && name.length > 0) whereClause.name = { startsWith: name }; 
 
     const profiles = await prisma.profile.findMany({
-      where: whereClauses,
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -82,7 +76,6 @@ export async function GET(request: NextRequest) {
             slug: true,
           },
         },
-      
       },
       orderBy: {
         name: "asc",
@@ -176,17 +169,15 @@ export async function POST(request: NextRequest) {
 
     if (!userWithProfile?.profile) {
       return NextResponse.json(
-        { success: false, error: "Perfil do usuário não encontrado" } as ApiResponse,
+        {
+          success: false,
+          error: "Perfil do usuário não encontrado",
+        } as ApiResponse,
         { status: 403 }
       );
     }
 
-    const {
-      name,
-      description,
-      permissions,
-      companyId
-    } = validation.data!;
+    const { name, description, permissions, companyId } = validation.data!;
 
     // Verificar se já existe perfil com esse nome na mesma empresa
     const existingProfile = await prisma.profile.findFirst({
@@ -257,7 +248,7 @@ export async function POST(request: NextRequest) {
         await tx.profilePermission.createMany({
           data: permissions.map((permissionId: string) => ({
             profileId: profile.id,
-            permissionId
+            permissionId,
           })),
         });
       }

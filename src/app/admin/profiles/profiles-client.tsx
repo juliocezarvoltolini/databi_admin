@@ -83,25 +83,28 @@ export default function ProfilesClient({ user, permissions }: Props) {
         }
       }
 
-       console.log("Vai pesquisar", user, "user.profile.company", (user.profile.company))
+      let companyResponse: Response;
+      if (
+        user.company &&
+        user.profile.permissions.every((p) => p.name != "VIEW_COMPANIES")
+      ) {
+        companyResponse = await fetch(`/api/companies/${user.company.id}`);
+      } else {
+        companyResponse = await fetch(`/api/companies`);
+      }
 
-       const companyResponse = await fetch(
-          `/api/companies/${user.company.id}`
-        );
+      if (companyResponse.ok) {
+        const companyResult = await companyResponse.json();
 
-        if (companyResponse.ok) {
-          const companyResult = await companyResponse.json();
-
-          if (companyResult.success) {
-            companiesData = [companyResult.data]; // Use variável local
-            setAllCompanies(companiesData);
-          }
-        } else if (user.company) {
-          setAllCompanies((value) => value.concat(user.company))
-        } else {
-          setAllCompanies((value) => value = [])
+        if (companyResult.success) {
+          companiesData = companyResult.data; // Use variável local
+          setAllCompanies(companiesData);
         }
-    
+      } else if (user.company) {
+        setAllCompanies((value) => value.concat(user.company));
+      } else {
+        setAllCompanies((value) => (value = []));
+      }
 
       // Carregar dashboards
       const dashboardsResponse = await fetch("/api/dashboards");
@@ -294,7 +297,6 @@ export default function ProfilesClient({ user, permissions }: Props) {
           {/* Lista de perfis */}
           <ProfileList
             userLogged={user}
-       
             allCompanies={allCompanies}
             permissions={permissions}
             onEdit={handleEditProfile}

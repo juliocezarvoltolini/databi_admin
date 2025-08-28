@@ -47,6 +47,7 @@ export default function ProfileForm({
   const [allDashboardsAvailable, setAllDashboardsAvailable] = useState<
     DashboardClient[]
   >([]);
+  console.log("allCompanies", allCompanies)
   const [allCompaniesAvailable, setAllCompaniesAvailable] = useState(
     allCompanies && allCompanies.length > 0
       ? allCompanies
@@ -56,6 +57,10 @@ export default function ProfileForm({
       ? [{ id: user.companyId }]
       : []
   );
+
+  useEffect(() => {
+    console.log(allCompaniesAvailable)
+  }, allCompaniesAvailable)
  
   const isEditing = !!profile;
 

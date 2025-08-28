@@ -5,27 +5,35 @@ import { verifyToken, getCurrentUser } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import AdminLayoutClient from "./admin-layout-client";
-import { Company, Dashboard, Permission, Profile, User } from "@/generated/prisma";
+import {
+  Company,
+  Dashboard,
+  Permission,
+  Profile,
+  User,
+} from "@/generated/prisma";
 import { DeepPartial } from "react-hook-form";
 export interface DashboardClient extends DeepPartial<Dashboard> {}
 export interface PermissionClient extends DeepPartial<Permission> {}
 export interface CompanyClient extends DeepPartial<Company> {
-   dashboards?: DashboardClient[];
+  dashboards?: DashboardClient[];
 }
 
-export interface ProfileClient extends DeepPartial<Profile>{
-  company: CompanyClient;
-  dashboards: DashboardClient[];
-  permissions: PermissionClient[];
-} 
+export interface ProfileClient extends DeepPartial<Profile> {
+  company?: CompanyClient;
+  dashboards?: DashboardClient[];
+  permissions?: PermissionClient[];
+}
 
-export interface UserClient extends User {
-company: CompanyClient;
-profile: ProfileClient
+export interface UserClient extends DeepPartial<User> {
+  company?: CompanyClient;
+  profile?: ProfileClient;
 }
 
 export interface PermissionsEnum {
-  [key: string]: boolean // permite qualquer propriedade
+  [key: string]: boolean; // permite qualquer propriedade
+  hasAdminAccess?: boolean;
+  hasDashboardAccess?: boolean;
 }
 
 export interface PermissionVerbs {
@@ -72,16 +80,21 @@ export default async function AdminLayout({
   );
   const isAdmin = await hasPermission(session.userId, "ADMIN_COMPANY");
 
-  // Se não tem nenhuma permissão administrativa, redirecionar para login
-  if (
-    !canViewUsers &&
-    !canViewProfiles &&
-    !canManageDashboards &&
-    !canViewCompanies &&
-    !isAdmin
-  ) {
-    redirect("/login");
-  }
+  // Todos os usuários logados podem acessar o admin layout (pelo menos para ver seu próprio perfil)
+  // A verificação de permissões específicas será feita em cada página individual
+  
+  // Verificar se tem permissões administrativas para mostrar menus específicos
+  const hasAdminAccess = 
+    canViewUsers ||
+    canViewProfiles ||
+    canManageDashboards ||
+    canViewCompanies ||
+    isAdmin;
+
+  // Verificar se tem acesso a dashboards
+  const hasDashboardAccess = 
+    (user.company?.dashboards && user.company.dashboards.length > 0) ||
+    (user.profile?.dashboards && user.profile.dashboards.length > 0);
 
   // Buscar dashboards da empresa do usuário
 
@@ -109,6 +122,8 @@ export default async function AdminLayout({
         canManageDashboards,
         canViewCompanies,
         isAdmin,
+        hasAdminAccess,
+        hasDashboardAccess,
       }}
       companyDashboards={companyDashboards}
     >

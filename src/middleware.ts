@@ -14,7 +14,7 @@ interface JWTUserPayload extends JWTPayload {
 }
 
 // Rotas que precisam de autenticação
-const protectedRoutes = ["/welcome", "/dashboard", "/admin", "/users", "/profiles"];
+const protectedRoutes = ["/dashboard", "/admin", "/users", "/profiles"];
 
 // Rotas de API que precisam de autenticação
 const protectedApiRoutes = ["/api/companies", "/api/users", "/api/profiles", "/api/permissions", "/api/dashboards"];

@@ -5,7 +5,6 @@ import { prisma } from "./prisma";
 import { UserSession, userSessionSchema } from "./types";
 import { User } from "@/generated/prisma";
 
-
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 // Interface que combina JWTPayload com UserSession
@@ -82,8 +81,13 @@ export async function authenticateUser(email: string, password: string) {
     },
   });
 
-  if (!user || !user.isActive ||  (user.company && !user.company.isActive)) {
+  if (!user || !user.isActive || (user.company && !user.company.isActive)) {
     return null;
+  }
+
+  // Verificar se o email foi verificado
+  if (!user.emailVerified) {
+    return { error: "EMAIL_NOT_VERIFIED", userId: user.id };
   }
 
   const isValidPassword = await verifyPassword(password, user.password);
@@ -102,25 +106,59 @@ export async function authenticateUser(email: string, password: string) {
 
 // Obter usuário atual (para usar nas rotas)
 export async function getCurrentUser(userId: string) {
-  return await prisma.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      company: true,
-      profile: {
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      isActive: true,
+      emailVerified: true,
+      emailVerifiedAt: true,
+      createdAt: true,
+      companyId: true,
+      profileId: true,
+      company: {
         include: {
+          dashboards: true
+        }
+      },
+      profile: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          dashboards: {
+            include: { dashboard: true },
+          },
           permissions: {
-            include: {
+            select: {
               permission: true,
             },
           },
-          dashboards: {
-            include: {
-              dashboard: true,
-            }
-          },
-          company: true
         },
       },
     },
   });
+
+  if (!user) return null;
+
+  // Transformar os dados para remover os wrappers
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.email,
+    isActive: user.isActive,
+    emailVerified: user.emailVerified,
+    emailVerifiedAt: user.emailVerifiedAt,
+    createdAt: user.createdAt,
+    companyId:user.companyId,
+    profileId: user.profileId,
+    company: user.company,
+    profile: user.profile ? {
+      ...user.profile,
+      dashboards: user.profile.dashboards.map(pd => pd.dashboard),
+      permissions: user.profile.permissions.map(pp => pp.permission),
+    } : null
+  }
 }

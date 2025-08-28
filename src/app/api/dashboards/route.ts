@@ -51,21 +51,6 @@ export async function GET(request: NextRequest) {
     
     const dashboards = await prisma.dashboard.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        powerbiUrl: true,
-        isActive: true,
-        createdAt: true,
-        company: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-          },
-        },
-      },
       orderBy: {
         name: "asc",
       },

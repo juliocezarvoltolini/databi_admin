@@ -34,13 +34,15 @@ model Company {
 
 // Usuários do sistema
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String // Hash da senha
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(cuid())
+  email            String   @unique
+  name             String
+  password         String // Hash da senha
+  isActive         Boolean  @default(true)
+  emailVerified    Boolean  @default(false) // Email foi verificado
+  emailVerifiedAt  DateTime? // Quando foi verificado
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relacionamento com empresa (opcional para administradores do sistema)
   companyId String?
@@ -52,6 +54,12 @@ model User {
 
   // Sessões para autenticação
   sessions Session[]
+  
+  // Tokens de verificação de email
+  emailVerificationTokens EmailVerificationToken[]
+  
+  // Tokens de reset de senha
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -146,4 +154,32 @@ model Session {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+// Tokens para verificação de email
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usedAt    DateTime? // Quando foi usado
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+// Tokens para reset de senha
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usedAt    DateTime? // Quando foi usado
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }

@@ -12,6 +12,7 @@ import {
   createAuthErrorResponse,
 } from "@/lib/api-auth";
 import { id } from "zod/locales";
+import { permission } from "process";
 
 // GET - Buscar perfil específico
 export async function GET(
@@ -195,7 +196,10 @@ export async function PUT(
       id: resolvedParams.id,
     };
 
-    if (userWithProfile.profile.companyId) {
+    if (
+      userWithProfile.profile.companyId &&
+      !hasPermission(user.userId, "EDIT_COMPANIES")
+    ) {
       whereClause.companyId = userWithProfile.profile.companyId;
     }
 
@@ -211,7 +215,7 @@ export async function PUT(
       );
     }
 
-    const { name, description, companyId, isActive, dashboards } = validation.data!;
+    const { name, description, companyId, isActive, dashboards, permissions } = validation.data!;
 
     // Se companyId foi fornecido, verificar se é a mesma empresa do usuário
     if (
@@ -260,13 +264,21 @@ export async function PUT(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(isActive !== undefined && { isActive }),
-        companyId: companyId,
+        companyId: companyId === null || companyId === undefined || companyId === "" ? null : companyId,
         ...(dashboards && {
           dashboards: {
             deleteMany: {}, // Remove associações existentes
             create: dashboards.map((dashboardId: string) => ({
               dashboardId })  ), // Adiciona novas associações
           },
+          ...(permissions && {
+            permissions: {
+              deleteMany: {},
+              create: permissions.map((permissionId: string) => ({
+                permissionId,
+              })),
+            }
+          })
         }),
       },
       include: {

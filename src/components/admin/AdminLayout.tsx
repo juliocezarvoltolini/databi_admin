@@ -21,7 +21,7 @@ const maxWidthStyles = {
 export default function AdminLayout({ 
   children, 
   maxWidth = '7xl',
-  className = '' 
+  className = ''
 }: AdminLayoutProps) {
   return (
     <div className={`

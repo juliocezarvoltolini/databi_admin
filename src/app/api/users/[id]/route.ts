@@ -46,6 +46,8 @@ export async function GET(
         email: true,
         name: true,
         isActive: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
         createdAt: true,
         profileId: true,
         profile: {
@@ -128,12 +130,28 @@ export async function PUT(
         id: resolvedParams.id,
  
       },
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+      },
     });
 
     if (!existingUser) {
       return NextResponse.json(
         { success: false, error: "Usuário não encontrado" } as ApiResponse,
         { status: 404 }
+      );
+    }
+
+    // Não permitir alteração de email se já foi verificado
+    if (updateData.email && updateData.email !== existingUser.email && existingUser.emailVerified) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "Não é possível alterar o email após a verificação. O email foi verificado e não pode ser modificado." 
+        } as ApiResponse,
+        { status: 400 }
       );
     }
 
@@ -252,6 +270,8 @@ export async function PUT(
         email: true,
         name: true,
         isActive: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
         createdAt: true,
         profile: {
           select: {

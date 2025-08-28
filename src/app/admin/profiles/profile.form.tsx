@@ -1,28 +1,30 @@
 // src/app/admin/profiles/profile-form.tsx
 "use client";
 
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { CompanyClient, DashboardClient, PermissionClient, ProfileClient, UserClient } from "../layout";
-
+import {
+  CompanyClient,
+  DashboardClient,
+  PermissionClient,
+  ProfileClient,
+  UserClient,
+} from "../layout";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   description: z.string().optional(),
   permissions: z.array(z.string()),
   companyId: z.string().optional(),
-  dashboards: z.array(z.string()).min(1, 'Selecione pelo menos um dashboard'),
+  dashboards: z.array(z.string()).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileFormSchema>;
 
-
-
 interface Props {
-  user: UserClient
+  user: UserClient;
   profile?: ProfileClient | null;
   allPermissions: PermissionClient[];
   allCompanies: CompanyClient[];
@@ -42,10 +44,28 @@ export default function ProfileForm({
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [allDashboardsAvailable, setAllDashboardsAvailable] = useState<
+    DashboardClient[]
+  >([]);
+  const [allCompaniesAvailable, setAllCompaniesAvailable] = useState(
+    allCompanies && allCompanies.length > 0
+      ? allCompanies
+      : user.company
+      ? [user.company]
+      : user.companyId && user.companyId != ""
+      ? [{ id: user.companyId }]
+      : []
+  );
+  console.log(user, allCompanies, allCompaniesAvailable);
   const isEditing = !!profile;
 
-
+  console.log("ProfileForm props:", {
+    user,
+    profile,
+    allPermissions,
+    allCompanies,
+    allDashboards,
+  });
 
   const {
     register,
@@ -61,13 +81,38 @@ export default function ProfileForm({
       description: profile?.description || "",
       permissions: profile?.permissions.map((p) => p.id) || [],
       companyId: profile?.company?.id || user.company?.id || "",
-      dashboards: profile?.dashboards?.map((d) => d.id) || []
+      dashboards: profile?.dashboards?.map((d) => d.id) || [],
     },
   });
 
   const selectedPermissions = watch("permissions") || [];
   const selectedCompany = watch("companyId") || "";
   const selectedDashboards = watch("dashboards") || [];
+
+  useEffect(() => {
+    // Filtrar dashboards disponíveis com base na empresa selecionada
+    const companyId = getValues("companyId");
+    console.log("Selected companyId:", companyId);
+    console.log("All dashboards:", allDashboards);
+
+    if (companyId) {
+      const filteredDashboards =
+        allDashboards?.filter((d) => d.companyId === companyId) || [];
+      setAllDashboardsAvailable(filteredDashboards);
+
+      // Se algum dashboard selecionado não pertence mais à empresa, removê-lo
+      const selectedDashboards = getValues("dashboards") || [];
+      const validSelectedDashboards = selectedDashboards.filter((dId) =>
+        filteredDashboards.some((d) => d.id === dId)
+      );
+      if (validSelectedDashboards.length !== selectedDashboards.length) {
+        setValue("dashboards", validSelectedDashboards);
+      }
+    } else {
+      // Se nenhuma empresa selecionada, mostrar todos os dashboards
+      setAllDashboardsAvailable([]);
+    }
+  }, [getValues, selectedCompany, setValue, allDashboards]);
 
   // Agrupar permissões por categoria
   const permissionsByCategory = allPermissions.reduce((acc, permission) => {
@@ -113,6 +158,12 @@ export default function ProfileForm({
   };
 
   const handleCompanyChange = (companyId: string) => {
+    if (selectedCompany === companyId) {
+      // Desmarcar se já estiver selecionada
+      setValue("companyId", "");
+      return;
+    }
+
     setValue("companyId", companyId);
   };
 
@@ -131,7 +182,10 @@ export default function ProfileForm({
 
   const handleSelectAllDashboards = (checked: boolean) => {
     if (checked) {
-      setValue("dashboards", allDashboards.map((d) => d.id));
+      setValue(
+        "dashboards",
+        allDashboardsAvailable.map((d) => d.id)
+      );
     } else {
       setValue("dashboards", []);
     }
@@ -151,6 +205,14 @@ export default function ProfileForm({
     if (allCompanies.length == 0 && user.company) {
       data.companyId = user.company.id;
     }
+
+    if (data.companyId !== "" && data.dashboards.length == 0) {
+      setError("Selecione ao menos um dashboard para o perfil");
+      setLoading(false);
+      return;
+    }
+
+    if (data.companyId === "") data.companyId = undefined;
 
     try {
       const url = isEditing ? `/api/profiles/${profile!.id}` : "/api/profiles";
@@ -212,7 +274,9 @@ export default function ProfileForm({
       {/* Informações básicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do Perfil</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Nome do Perfil
+          </label>
           <input
             {...register("name")}
             type="text"
@@ -221,12 +285,16 @@ export default function ProfileForm({
             disabled={loading}
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.name.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+              {errors.name.message}
+            </p>
           )}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Descrição (opcional)</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Descrição (opcional)
+          </label>
           <input
             {...register("description")}
             type="text"
@@ -239,7 +307,9 @@ export default function ProfileForm({
 
       {/* Empresas */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empresas</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Empresas
+        </label>
         {errors.companyId && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {errors.companyId.message}
@@ -247,24 +317,26 @@ export default function ProfileForm({
         )}
 
         <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {allCompanies.map((company) => (
+          {allCompaniesAvailable.map((company) => (
             <label
               key={company.id}
               className="flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
             >
               <input
-                type="radio"
+                type="checkbox"
                 name="company"
                 checked={selectedCompany === company.id}
                 onChange={() => handleCompanyChange(company.id)}
                 className="text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
-                disabled={loading}
+                disabled={loading || allCompanies.length == 0}
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                   {company.name}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{company.slug}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {company.slug}
+                </p>
               </div>
             </label>
           ))}
@@ -273,7 +345,9 @@ export default function ProfileForm({
 
       {/* Dashboards */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dashboards</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Dashboards
+        </label>
         {errors.dashboards && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {errors.dashboards.message}
@@ -281,7 +355,7 @@ export default function ProfileForm({
         )}
 
         <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-lg p-4">
-          {allDashboards.length > 0 ? (
+          {allDashboardsAvailable.length > 0 ? (
             <>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
@@ -302,24 +376,32 @@ export default function ProfileForm({
                     Dashboards Disponíveis
                   </h3>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
-                    ({allDashboards.length} disponíveis)
+                    ({allDashboardsAvailable.length} disponíveis)
                   </span>
                 </div>
 
                 <label className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={selectedDashboards.length === allDashboards.length && allDashboards.length > 0}
-                    onChange={(e) => handleSelectAllDashboards(e.target.checked)}
+                    checked={
+                      selectedDashboards.length ===
+                        allDashboardsAvailable.length &&
+                      allDashboardsAvailable.length > 0
+                    }
+                    onChange={(e) =>
+                      handleSelectAllDashboards(e.target.checked)
+                    }
                     className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                     disabled={loading}
                   />
-                  <span className="text-gray-700 dark:text-gray-300">Selecionar todos</span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    Selecionar todos
+                  </span>
                 </label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {allDashboards.map((dashboard) => (
+                {allDashboardsAvailable.map((dashboard) => (
                   <label
                     key={dashboard.id}
                     className="flex items-start space-x-3 p-3 border border-gray-100 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 cursor-pointer transition-colors"
@@ -342,7 +424,6 @@ export default function ProfileForm({
                           {dashboard.description}
                         </p>
                       )}
-                     
                     </div>
                   </label>
                 ))}
@@ -376,7 +457,9 @@ export default function ProfileForm({
 
       {/* Permissões */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Permissões</label>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Permissões
+        </label>
         {errors.permissions && (
           <p className="mt-1 text-sm text-red-600 dark:text-red-400">
             {errors.permissions.message}
@@ -423,7 +506,9 @@ export default function ProfileForm({
                       className="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
                       disabled={loading}
                     />
-                    <span className="text-gray-700 dark:text-gray-300">Selecionar todas</span>
+                    <span className="text-gray-700 dark:text-gray-300">
+                      Selecionar todas
+                    </span>
                   </label>
                 </div>
 
@@ -494,7 +579,7 @@ export default function ProfileForm({
           </h4>
           <div className="flex flex-wrap gap-2">
             {selectedDashboards.map((dashboardId) => {
-              const dashboard = allDashboards.find(
+              const dashboard = allDashboardsAvailable.find(
                 (d) => d.id === dashboardId
               );
               return dashboard ? (
@@ -523,7 +608,11 @@ export default function ProfileForm({
 
         <button
           type="submit"
-          disabled={loading || selectedPermissions.length === 0 && selectedDashboards.length === 0}
+          disabled={
+            loading ||
+            (selectedPermissions.length === 0 &&
+              selectedDashboards.length === 0)
+          }
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
         >
           {loading ? (

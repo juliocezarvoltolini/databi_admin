@@ -8,6 +8,8 @@ import {
   authenticateApiRequest,
   createAuthErrorResponse,
 } from "@/lib/api-auth";
+import { generateEmailVerificationToken } from "@/lib/email-verification";
+import { sendEmailVerification } from "@/lib/email";
 
 // GET - Listar usuários da empresa
 export async function GET(request: NextRequest) {
@@ -45,6 +47,8 @@ export async function GET(request: NextRequest) {
         email: true,
         name: true,
         isActive: true,
+        emailVerified: true,
+        emailVerifiedAt: true,
         createdAt: true,
         company: {
           select: {
@@ -116,8 +120,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, name, password, profileId, companyId } = validation.data!;
-
+    const { email, name, profileId, companyId } = validation.data!;
+     console.log("Creating user with data:", { email, name, profileId, companyId });
     // Verificar se email já existe
     const existingUser = await prisma.user.findUnique({
       where: { email },
@@ -162,6 +166,8 @@ export async function POST(request: NextRequest) {
     if (targetCompanyId) {
       profileWhere.companyId = targetCompanyId
     }
+
+    console.log("Verifying profile with conditions:", profileWhere);
 
     const profile = await prisma.profile.findFirst({
       where: profileWhere,
@@ -245,15 +251,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Hash da senha
-    const hashedPassword = await hashPassword(password);
+    // Gerar senha temporária (será substituída na verificação de email)
+    const temporaryPassword = Math.random().toString(36).slice(-12);
+    const hashedPassword = await hashPassword(temporaryPassword);
 
-    // Criar usuário
+    // Criar usuário com senha temporária
     const userData: any = {
       email,
       name,
       password: hashedPassword,
       profileId: profileId,
+      emailVerified: false, // Usuário deve verificar email e definir senha
     };
 
     // Só adicionar companyId se não for null
@@ -261,7 +269,7 @@ export async function POST(request: NextRequest) {
       userData.companyId = targetCompanyId;
     }
 
-    const userSelect: any = {
+    const baseUserSelect = {
       id: true,
       email: true,
       name: true,
@@ -276,25 +284,54 @@ export async function POST(request: NextRequest) {
     };
 
     // Só incluir company se o usuário tiver uma empresa
-    if (targetCompanyId !== null) {
-      userSelect.company = {
-        select: {
-          id: true,
-          name: true,
-        },
-      };
-    }
+    const userSelect = targetCompanyId !== null 
+      ? {
+          ...baseUserSelect,
+          company: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        }
+      : baseUserSelect;
 
     const newUser = await prisma.user.create({
       data: userData,
       select: userSelect,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Usuário criado com sucesso",
-      data: newUser,
-    } as ApiResponse);
+    // Gerar token e enviar email de verificação
+    try {
+      const token = await generateEmailVerificationToken(newUser.id);
+      const emailResult = await sendEmailVerification(email, name, token);
+      
+      if (emailResult.success) {
+        return NextResponse.json({
+          success: true,
+          message: "Usuário criado com sucesso! Um email de verificação foi enviado.",
+          data: newUser,
+          emailSent: true,
+        } as ApiResponse);
+      } else {
+        console.error('Erro ao enviar email de verificação:', emailResult.error);
+        return NextResponse.json({
+          success: true,
+          message: "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
+          data: newUser,
+          emailSent: false,
+          emailError: emailResult.error,
+        } as ApiResponse);
+      }
+    } catch (emailError) {
+      console.error('Erro ao processar email de verificação:', emailError);
+      return NextResponse.json({
+        success: true,
+        message: "Usuário criado com sucesso, mas houve um erro no envio do email de verificação.",
+        data: newUser,
+        emailSent: false,
+      } as ApiResponse);
+    }
   } catch (error) {
     console.error("Erro ao criar usuário:", error);
     return NextResponse.json(

@@ -1,4 +1,5 @@
 // src/lib/types.ts
+import { permission } from "process";
 import { z } from "zod";
 
 // Schema para validar dados de usuário
@@ -27,13 +28,21 @@ export const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-// Schema para criar usuário
+// Schema para criar usuário (senha será definida na confirmação de email)
 export const createUserSchema = z.object({
   email: z.string().email("Email inválido"),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   profileId: z.string().cuid().nonoptional(),
   companyId: z.string().cuid().nullable().optional(), // Opcional para administradores do sistema
+});
+
+// Schema para definir senha na verificação de email
+export const setPasswordSchema = z.object({
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  confirmPassword: z.string().min(6, "Confirmação de senha é obrigatória"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Senhas não coincidem",
+  path: ["confirmPassword"],
 });
 
 // Schema para criar empresa
@@ -71,12 +80,14 @@ export const updateProfileSchema = z.object({
   companyId: z.string().cuid().optional(), // ID da empresa
   isActive: z.boolean().optional(),
   dashboards: z.array(z.string()).optional(),
+  permissions: z.array(z.string()).optional(),
 });
 
 // Tipos derivados dos schemas
 export type UserSession = z.infer<typeof userSessionSchema>;
 export type LoginData = z.infer<typeof loginSchema>;
 export type CreateUserData = z.infer<typeof createUserSchema>;
+export type SetPasswordData = z.infer<typeof setPasswordSchema>;
 export type CreateCompanyData = z.infer<typeof createCompanySchema>;
 export type CreateDashboardData = z.infer<typeof createDashboardSchema>;
 export type CreateProfileData = z.infer<typeof createProfileSchema>;

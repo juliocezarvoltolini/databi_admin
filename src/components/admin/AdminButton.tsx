@@ -15,17 +15,17 @@ interface AdminButtonProps {
 }
 
 const variantStyles = {
-  primary: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900 text-white shadow-lg hover:shadow-xl',
-  secondary: 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm hover:shadow-md',
-  danger: 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 dark:from-red-700 dark:to-red-800 dark:hover:from-red-800 dark:hover:to-red-900 text-white shadow-lg hover:shadow-xl',
-  success: 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 dark:from-green-700 dark:to-green-800 dark:hover:from-green-800 dark:hover:to-green-900 text-white shadow-lg hover:shadow-xl',
-  warning: 'bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 dark:from-yellow-600 dark:to-yellow-700 dark:hover:from-yellow-700 dark:hover:to-yellow-800 text-white shadow-lg hover:shadow-xl'
+  primary: 'btn-primary',
+  secondary: 'btn-secondary', 
+  danger: 'btn-danger',
+  success: 'btn-success',
+  warning: 'btn-warning'
 };
 
 const sizeStyles = {
-  sm: 'px-3 py-1.5 text-xs',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base'
+  sm: 'btn-sm',
+  md: '',
+  lg: 'btn-lg'
 };
 
 export default function AdminButton({
@@ -40,14 +40,11 @@ export default function AdminButton({
   onClick,
   type = 'button'
 }: AdminButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-gray-900';
-  const disabledStyles = 'opacity-50 cursor-not-allowed';
-  
   const buttonClasses = `
-    ${baseStyles}
+    btn
     ${variantStyles[variant]}
     ${sizeStyles[size]}
-    ${disabled || loading ? disabledStyles : ''}
+    ${disabled || loading ? 'loading' : ''}
     ${className}
   `.trim();
 

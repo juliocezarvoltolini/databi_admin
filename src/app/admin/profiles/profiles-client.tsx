@@ -114,17 +114,22 @@ export default function ProfilesClient({ user, permissions }: Props) {
 
 
       if (dashboardsResponse.ok) {
+      
         const dashboardsResult = await dashboardsResponse.json();
         if (dashboardsResult.success) {
           setAllDashboards(dashboardsResult.data);
         }
       } else {
-        // Agora use a variável local em vez do estado
+  
         if (!user.profile.dashboards || user.profile.dashboards.length === 0) {
-   
+        
           if (companiesData.length > 0) {
+         
             setAllDashboards(companiesData[0].dashboards || []);
           }
+        } else {
+      
+          setAllDashboards(user.profile.dashboards || []);  
         }
       }
     } catch (error) {

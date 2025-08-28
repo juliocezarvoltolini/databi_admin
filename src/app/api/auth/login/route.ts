@@ -36,8 +36,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Gerar token
-    const token = await generateToken(user);
+    // Verificar se é um erro de email não verificado
+    if ('error' in user && user.error === 'EMAIL_NOT_VERIFIED') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Email não verificado. Verifique sua caixa de entrada e clique no link de confirmação.",
+          code: "EMAIL_NOT_VERIFIED",
+          userId: user.userId,
+        } as ApiResponse,
+        { status: 403 }
+      );
+    }
+
+    // Gerar token (user é do tipo UserSession neste ponto)
+    const token = await generateToken(user as import("@/lib/types").UserSession);
 
     // Configurar cookie
     const cookieStore = await cookies();

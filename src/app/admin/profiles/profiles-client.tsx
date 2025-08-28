@@ -91,7 +91,7 @@ export default function ProfilesClient({ user, permissions }: Props) {
 
         if (companyResponse.ok) {
           const companyResult = await companyResponse.json();
-    
+
           if (companyResult.success) {
             companiesData = [companyResult.data]; // Use variável local
             setAllCompanies(companiesData);
@@ -102,7 +102,6 @@ export default function ProfilesClient({ user, permissions }: Props) {
         if (companiesResponse.ok) {
           const companiesResult = await companiesResponse.json();
           if (companiesResult.success) {
-     
             companiesData = companiesResult.data; // Use variável local
             setAllCompanies(companiesData);
           }
@@ -112,24 +111,26 @@ export default function ProfilesClient({ user, permissions }: Props) {
       // Carregar dashboards
       const dashboardsResponse = await fetch("/api/dashboards");
 
-
       if (dashboardsResponse.ok) {
-      
         const dashboardsResult = await dashboardsResponse.json();
         if (dashboardsResult.success) {
           setAllDashboards(dashboardsResult.data);
         }
       } else {
-  
-        if (!user.profile.dashboards || user.profile.dashboards.length === 0) {
-        
-          if (companiesData.length > 0) {
-         
-            setAllDashboards(companiesData[0].dashboards || []);
-          }
+        if (companiesData && companiesData.length > 0) {
+          setAllDashboards(companiesData[0].dashboards || []);
+        } else if (
+          user.profile.dashboards &&
+          user.profile.dashboards.length > 0
+        ) {
+          setAllDashboards(user.profile.dashboards || []);
+        } else if (
+          user.company?.dashboards &&
+          user.company.dashboards.length > 0
+        ) {
+          setAllDashboards(user.company.dashboards);
         } else {
-      
-          setAllDashboards(user.profile.dashboards || []);  
+          setAllDashboards([])
         }
       }
     } catch (error) {

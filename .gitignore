@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.build/
 /out/
 
 # production
@@ -41,3 +42,5 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+*.zip

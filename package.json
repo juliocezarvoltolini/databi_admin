@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "package:prod": "npm run build && node scripts/package-production.js",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",

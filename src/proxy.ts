@@ -1,4 +1,4 @@
-// middleware.ts - Proteção das rotas
+// proxy.ts - Proteção das rotas
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify, type JWTPayload } from "jose";
 
@@ -25,7 +25,7 @@ const publicRoutes = ["/login", "/register", "/"];
 // Rotas de API públicas
 const publicApiRoutes = ["/api/auth"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Permitir rotas públicas
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
-  
+
   const isProtectedApiRoute = protectedApiRoutes.some((route) =>
     pathname.startsWith(route)
   );
@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
 
   // Verificar token
   let token = request.cookies.get("auth-token")?.value;
-  
+
   // Para APIs, também verificar header Authorization
   if (!token && isProtectedApiRoute) {
     const authHeader = request.headers.get("authorization");
